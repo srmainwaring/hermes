@@ -1,0 +1,5 @@
+
+.directory
+.idea
+cmake-build-debug
+main_alternative.cpp
