@@ -53,6 +53,10 @@ int main() {
 
 //    auto a = MyString();
 
+    Derived a;
+
+
+
 
 
     return 0;
