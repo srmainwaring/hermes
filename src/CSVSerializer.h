@@ -46,7 +46,7 @@ public:
 
     void Initialize(const Message* msg) const override {
 
-        if (m_filename.size() == 0) {
+        if (m_filename.empty()) {
             BuildFileName(msg);
         }
 
@@ -61,16 +61,24 @@ public:
     }
 
     void Serialize(const Message* msg) const override {
-        BuildString visitor;  // TODO: le mettre en membre et appeler une methode clean ?
+
+        // TODO: voir si on utilise pas plutot un BasicMemoryWriter
+        // Est-ce qu'on peut construire directement un format specifier a l'initialisation ?
+
+
+
+//        BuildString visitor;  // TODO: le mettre en membre et appeler une methode clean ?
+
+        MyVisitor visitor;
 
         std::ostringstream ss;
 
         for (const auto& field : *msg) {
             field->ApplyVisitor(visitor);
-            ss << visitor.m_str << m_delimiter;
+//            ss << visitor.GetString() << m_delimiter;
         }
-        c_msgStr = std::move(ss.str());
-        CloseMsg();
+//        c_msgStr = std::move(ss.str());
+//        CloseMsg();
 
     }
 

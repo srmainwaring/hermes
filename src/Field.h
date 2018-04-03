@@ -23,13 +23,15 @@ public:
     m_unit(std::move(unit)),
     m_description(std::move(description)) {}
 
-    virtual std::string GetStr() const = 0;  // TODO: utiliser plutot une classe Visitor pour la generation de string !!!
+//    virtual std::string GetStr() const = 0;  // TODO: utiliser plutot une classe Visitor pour la generation de string !!!
 
     const std::string& GetName() const { return m_name; }
     const std::string& GetUnit() const { return m_unit; }
     const std::string& GetDescription() const { return m_description; }
 
     virtual void ApplyVisitor(VisitorInterface& visitor) const = 0;
+//    virtual void ApplyVisitor(VisitorInterface& visitor) const;
+
 
 };
 
@@ -44,9 +46,9 @@ public:
             FieldBase(std::move(name), std::move(unit), std::move(description)),
             m_valPtr(ptr) {}
 
-    std::string GetStr() const {
-        return std::to_string(*m_valPtr);
-    }
+//    std::string GetStr() const {
+//        return std::to_string(*m_valPtr);
+//    }
 
     int& GetValue() const {
         return *m_valPtr;
@@ -66,9 +68,9 @@ public:
             FieldBase(std::move(name), std::move(unit), std::move(description)),
             m_valPtr(ptr) {}
 
-    std::string GetStr() const {
-        return std::to_string(*m_valPtr);
-    }
+//    std::string GetStr() const {
+//        return std::to_string(*m_valPtr);
+//    }
 
     float& GetValue() const {
         return *m_valPtr;
@@ -88,9 +90,9 @@ public:
             FieldBase(std::move(name), std::move(unit), std::move(description)),
             m_valPtr(ptr) {}
 
-    std::string GetStr() const {
-        return std::to_string(*m_valPtr);
-    }
+//    std::string GetStr() const {
+//        return std::to_string(*m_valPtr);
+//    }
 
     double& GetValue() const {
         return *m_valPtr;
@@ -110,9 +112,9 @@ public:
             FieldBase(std::move(name), std::move(unit), std::move(description)),
             m_valPtr(ptr) {}
 
-    std::string GetStr() const {
-        return *m_valPtr;
-    }
+//    std::string GetStr() const {
+//        return *m_valPtr;
+//    }
 
     std::string& GetValue() const {
         return *m_valPtr;
@@ -132,9 +134,9 @@ public:
             FieldBase(std::move(name), std::move(unit), std::move(description)),
             m_valPtr(ptr) {}
 
-    std::string GetStr() const {
-        return "TODO";
-    }
+//    std::string GetStr() const {
+//        return "TODO";
+//    }
 
     std::vector<int>& GetValue() const {
         return *m_valPtr;

@@ -4,5 +4,7 @@ project(messaging_polymorphism)
 set(CMAKE_CXX_STANDARD 14)
 
 add_subdirectory(src)
+add_subdirectory(fmt)
 
 add_executable(messaging_polymorphism main.cpp ${FILES})
+target_link_libraries(messaging_polymorphism PRIVATE fmt::fmt-header-only)

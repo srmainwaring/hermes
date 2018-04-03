@@ -18,7 +18,7 @@ int main() {
 
     Obj o;
     o.i = 2;
-    o.d = 3.1498979;
+    o.d = 3.14989796584651681;
     o.str = "coucou";
 
 
@@ -51,7 +51,7 @@ int main() {
 ////    field.ApplyVisitor(&stringbuilder);
 
 
-
+//    auto a = MyString();
 
 
 
