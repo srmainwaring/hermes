@@ -1,15 +1,14 @@
 #include <iostream>
 
-#include "src/Message.h"
-#include "src/CSVSerializer.h"
-#include "src/FieldVisitors.h"
+#include "src/Messaging.h"
+#include "src/Serializer.h"
 
-using namespace std;
+//using namespace std;
 
 struct Obj {
     int i;
     double d;
-    string str;
+    std::string str;
 };
 
 
@@ -21,39 +20,75 @@ int main() {
     o.d = 3.14989796584651681;
     o.str = "coucou";
 
+    Message m("message1", "Le premier message");
 
 
-    Message m("my message", o);
+    m.Add<int>("entier", "m/s", "Un entier", &o.i);
+    m.Add<double>("double", "km", "Un double", &o.d);
+    m.Add<std::string>("string", "--", "Une chaine", &o.str);
 
-    m.AddField("Entier", "no unit", "Represente un entier", &o.i);
-    m.AddField("double", "no unit", "Represente un double", &o.d);
-    m.AddField("String", "no unit", "Represente une string", &o.str);
+    Message m2("message2", "Un second message");
 
-    m.AddSerializer(std::make_shared<CSVSerializer>());
+    int i = 23;
+    double d = 1.414;
 
-
-
-    m.Initialize();
-    m.Send();
-
-    for (uint i=0; i<3; ++i) {
-        m.Serialize();
-        m.Send();
-    }
+    m2.Add<int>("entier2", "", "Second entier", &i);
+    m2.Add<double>("double2", "kk", "Second double", &d);
 
 
+    m.Add<Message>("message", "", "Second message", &m2);
 
-//    // Test visitor
-//    BuildString stringbuilder;
+
+//    PrintVisitor v;
+//    m.Accept(v);
+
+
+    PrintSerializer ser;
+    ser.Initialize(&m);
+
+
+
+
+
+
+
+
+
+
+
+
+
+//    Message m("my message", o);
 //
-//    IntField field("essai", "m/s", "coucou", &o.i);
+//    m.AddField("Entier", "no unit", "Represente un entier", &o.i);
+//    m.AddField("double", "no unit", "Represente un double", &o.d);
+//    m.AddField("String", "no unit", "Represente une string", &o.str);
 //
-////    field.ApplyVisitor(&stringbuilder);
-
-
-//    auto a = MyString();
-
-    Derived a;
+//    m.AddSerializer(std::make_shared<CSVSerializer>());
+//
+//
+//
+//    m.Initialize();
+//    m.Send();
+//
+//    for (uint i=0; i<3; ++i) {
+//        m.Serialize();
+//        m.Send();
+//    }
+//
+//
+//
+////    // Test visitor
+////    BuildString stringbuilder;
+////
+////    IntField field("essai", "m/s", "coucou", &o.i);
+////
+//////    field.ApplyVisitor(&stringbuilder);
+//
+//
+////    auto a = MyString();
+//
+//    Derived a;
 
 
 

@@ -24,25 +24,19 @@ class Visitor {
 public:
 
     void visit(const AbstractNode<int>& top) const;
-
     void visit(const AbstractNode<double>& top) const;
-
     void visit(const AbstractNode<MyDT>& top) const;
-
     void visit(const AbstractNode<Container>& cont) const;
 
-
 };
-
 
 
 class Visitable {  // Visitable
 
 public:
     virtual void Accept(const Visitor& visitor) const = 0;
-
-
 };
+
 
 
 template <class T>
@@ -67,11 +61,11 @@ public:
 
 };
 
-class IntNode : public AbstractNode<IntNode> {};
+//class IntNode : public AbstractNode<IntNode> {};
 
 
 
-class Container {
+class Container : public Visitable {
 private:
     typedef std::vector<std::unique_ptr<Visitable>> VectorType;
     VectorType m_vector;
@@ -82,12 +76,11 @@ public:
         m_vector.emplace_back(std::make_unique<AbstractNode<T>>(val));
     }
 
-    void visit(const Visitor& visitor) const {
+    void Accept(const Visitor& visitor) const override {
         for (const auto& e : m_vector) {
             e->Accept(visitor);
         }
     }
-
 
     typedef VectorType::iterator iterator;
     iterator begin() { return m_vector.begin(); }
@@ -97,6 +90,10 @@ public:
     const_iterator cend() { return m_vector.cend(); }
 
 };
+
+
+
+
 
 void Visitor::visit(const AbstractNode<int> &top) const {
     std::cout << "I am integer with value " << *top.GetData() << std::endl;
@@ -112,7 +109,7 @@ void Visitor::visit(const AbstractNode<MyDT> &top) const {
 
 void Visitor::visit(const AbstractNode<Container> &cont) const {
     std::cout << "I am a container and I am going to visit myself\n";
-    cont.GetData()->visit(*this);
+    cont.GetData()->Accept(*this);
 
 }
 
@@ -136,7 +133,7 @@ int main() {
     Visitor visitor;
 
 
-    c.visit(visitor);
+//    c.Accept(visitor);
 
 
 
@@ -148,7 +145,7 @@ int main() {
 
     c.Add<Container>(&c2);
 
-    c.visit(visitor);
+    c.Accept(visitor);
 
 
 //    for (const auto& e : c) {

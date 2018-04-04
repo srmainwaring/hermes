@@ -1,16 +1,18 @@
 message(STATUS "   ...SOURCE FILES")
 
 set(FILES_LOCAL
-        Field.h
-        Field.cpp
-        Message.h
-        Message.cpp
+#        Field.h
+#        Field.cpp
+#        Message.h
+#        Message.cpp
         Serializer.h
         Serializer.cpp
         CSVSerializer.h
         CSVSerializer.cpp
-        FieldVisitors.h
-        FieldVisitors.cpp
+#        FieldVisitors.h
+#        FieldVisitors.cpp
+        Messaging.h
+        Messaging.cpp
         )
 
 foreach(file ${FILES_LOCAL})

@@ -5,18 +5,43 @@
 #ifndef MESSAGING_POLYMORPHISM_SERIALIZER_H
 #define MESSAGING_POLYMORPHISM_SERIALIZER_H
 
-#include "Message.h"
+#include "Messaging.h"
 
-class Serializer {
+
+
+class PrintSerializer : public Serializer {
+
+
+private:
+    PrintVisitor m_v;
+
 
 public:
+    void Initialize(Message* msg) override {
 
-    virtual void Initialize(const Message* msg) const = 0;
-    virtual void Serialize(const Message* msg) const = 0;
-    virtual void Finalize(const Message* msg) const = 0;
-    virtual void Send(const Message* msg) const = 0;
+        for (std::unique_ptr<FieldBase>& fb : *msg) {
+            std::cout << fb->GetName() << "\n";
+        }
+
+    }
+
+    void Serialize(Message* msg) override {
+
+    }
+
+    void Finalize(Message* msg) override {
+
+    }
+
+    void Send(Message* msg) override {
+
+    }
+
+
 
 };
+
+
 
 
 #endif //MESSAGING_POLYMORPHISM_SERIALIZER_H
