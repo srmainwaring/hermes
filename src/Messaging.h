@@ -109,7 +109,7 @@ public:
     std::string GetDescription() const { return m_description; }
 
     template <class T>
-    void Add(std::string&& name, std::string&& unit, std::string&& description, T* val) {
+    void AddField(std::string &&name, std::string &&unit, std::string &&description, T *val) {
         m_fields.emplace_back(std::make_unique<Field<T>>(name, unit, description, val));
     }
 

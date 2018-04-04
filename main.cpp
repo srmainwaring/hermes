@@ -23,9 +23,9 @@ int main() {
     Message m("MSG1", "Le premier message");
 
 
-    m.Add<int>("Nb", "m/s", "Un entier", &o.i);
-    m.Add<double>("pi", "km", "Un double", &o.d);
-    m.Add<std::string>("name", "--", "Une chaine", &o.str);
+    m.AddField<int>("Nb", "m/s", "Un entier", &o.i);
+    m.AddField<double>("pi", "km", "Un double", &o.d);
+    m.AddField<std::string>("name", "--", "Une chaine", &o.str);
 
     Message m2("MSG2", "Un second message");
 
@@ -34,36 +34,29 @@ int main() {
     float f = 1.397e12;
 
 
-    m2.Add<int>("entier2", "", "Second entier", &i);
-    m2.Add<double>("double2", "kk", "Second double", &d);
+    m2.AddField<int>("entier2", "", "Second entier", &i);
+    m2.AddField<double>("double2", "kk", "Second double", &d);
 
 
-    m.Add<Message>("message", "", "Second message", &m2);
+    m.AddField<Message>("message", "", "Second message", &m2);
 
-    m.Add<float>("float", "", "Un float", &f);
+    m.AddField<float>("float", "", "Un float", &f);
 
-
-//    PrintVisitor v;
-//    m.Accept(v);
-
-
-//    PrintSerializer ser;
-//    ser.Initialize(&m);
-
+    // Building a CSV serializer
     auto csvSerializer = std::make_shared<CSVSerializer>();
 //    csvSerializer->SetDelimiter(",");
     m.AddSerializer(csvSerializer);
 
-
+    // Building a print serializer
     auto printSerializer = std::make_shared<PrintSerializer>();
     m.AddSerializer(printSerializer);
 
-
-
+    // Initializing the message
     m.Initialize();
     m.Send();
 
-    for (int idx=0; idx<10000; ++idx) {
+    // Using the message serialization
+    for (int idx=0; idx<10; ++idx) {
         m.Serialize();
         m.Send();
     }
