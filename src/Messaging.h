@@ -173,41 +173,17 @@ void Field<T>::Accept(Visitor &visitor) const {
 }
 
 
-
-//class PrintVisitor : public Visitor {
-//public:
-//    void visit(const Field<int>* field) override {
-//        std::cout << "I am an int : "<< *field->GetData() << "\n";
-//    }
-//    void visit(const Field<double>* field) override {
-//        std::cout << "I am a double : "<< *field->GetData() << "\n";
-//    }
-//    void visit(const Field<std::string>* field) override {
-//        std::cout << "I am a string : "<< *field->GetData() << "\n";
-//    }
-//    void visit(const Field<Message>* field) override {
-//        std::cout << "\tI am a message and I am visiting myself:\n";
-//        field->GetData()->Accept(*this);
-//    }
-//};
-
-//class SerializerVisitor : public Visitor {
-//protected:
-//    Serializer* m_serializer;
-//    explicit SerializerVisitor(Serializer* serializer) : m_serializer(serializer) {}
-//};
-
+template <class C>
+class SerializationVisitor : public Visitor {
+protected:
+    C* m_serializer;
+    explicit SerializationVisitor(C* serializer) : m_serializer(serializer) {}
+};
 
 
 class PrintSerializer : public Serializer {
 
-    class PrintVisitor : public Visitor { // TODO: cette classe est eligible au template
-    protected:
-        PrintSerializer* m_serializer;
-        explicit PrintVisitor(PrintSerializer* serializer) : m_serializer(serializer) {}
-    };
-
-    class InitVisitor : public PrintVisitor {
+    class InitVisitor : public SerializationVisitor<PrintSerializer> {
 
         inline void visit(FieldBase* field) {
             m_serializer->m_w.write("  * {:>10s} ({:^5s}) : {:50s}\n",
@@ -215,7 +191,8 @@ class PrintSerializer : public Serializer {
         }
 
     public:
-        explicit InitVisitor(PrintSerializer* serializer) : PrintVisitor(serializer) {}
+        explicit InitVisitor(PrintSerializer* serializer) :
+                SerializationVisitor<PrintSerializer>(serializer) {}
 
         void visit(const Field<int>* field) override { visit((FieldBase*)field); }
         void visit(const Field<double>* field) override { visit((FieldBase*)field); }
@@ -227,10 +204,11 @@ class PrintSerializer : public Serializer {
         }
     };
 
-    class SerializeVisitor : public PrintVisitor {
+    class SerializeVisitor : public SerializationVisitor<PrintSerializer> {
 
     public:
-        explicit SerializeVisitor(PrintSerializer* serializer) : PrintVisitor(serializer) {}
+        explicit SerializeVisitor(PrintSerializer* serializer) :
+                SerializationVisitor<PrintSerializer>(serializer) {}
 
         void visit(const Field<int>* field) override {  // TODO: parametrer les formats...
             m_serializer->m_w.write("  * {:>10s} ({:^5s}) : {:d}\n",
@@ -249,8 +227,6 @@ class PrintSerializer : public Serializer {
 
         void visit(const Field<Message>* field) override {
             auto msg = field->GetData();
-//            m_serializer->m_w.write(("\t\n[{}] : {}\n", msg->GetName(), msg->GetDescription()));
-//            m_serializer->m_w.write("\n\t[MESSAGE]\n");
             msg->Accept(*this);
         }
 
@@ -287,11 +263,8 @@ public:
     }
 
 private:
-//    std::string m_str;
     fmt::MemoryWriter m_w;
-
     SerializeVisitor m_serializeVisitor;
-//    static std::string c_prefix = "";
 
 };
 
@@ -301,21 +274,15 @@ class CSVSerializer : public Serializer {
 
 private:
 
-    class CSVVisitor : public Visitor {
-    protected:
-        CSVSerializer* m_serializer;
-        explicit CSVVisitor(CSVSerializer* serializer) : m_serializer(serializer) {}
-
-    };
-
-    class InitVisitor : public CSVVisitor {
+    class InitVisitor : public SerializationVisitor<CSVSerializer> {
 
         inline void visit(FieldBase* field) {
             m_serializer->m_w << field->GetName() << m_serializer->m_delimiter;
         }
 
     public:
-        explicit InitVisitor(CSVSerializer* serializer) : CSVVisitor(serializer) {}
+        explicit InitVisitor(CSVSerializer* serializer) :
+                SerializationVisitor<CSVSerializer>(serializer) {}
 
         void visit(const Field<int>* field) override { visit((FieldBase*)field); }
         void visit(const Field<double>* field) override { visit((FieldBase*)field); }
@@ -325,10 +292,11 @@ private:
         }
     };
 
-    class SerializeVisitor : public CSVVisitor {
+    class SerializeVisitor : public SerializationVisitor<CSVSerializer> {
 
     public:
-        explicit SerializeVisitor(CSVSerializer* serializer) : CSVVisitor(serializer) {}
+        explicit SerializeVisitor(CSVSerializer* serializer) :
+                SerializationVisitor<CSVSerializer>(serializer) {}
 
         void visit(const Field<int>* field) override {
             m_serializer->m_w << *field->GetData() << m_serializer->m_delimiter;
