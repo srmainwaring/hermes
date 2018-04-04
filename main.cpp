@@ -39,12 +39,12 @@ int main() {
     m.Add<Message>("message", "", "Second message", &m2);
 
 
-//    PrintVisitor v;
-//    m.Accept(v);
+    PrintVisitor v;
+    m.Accept(v);
 
 
-    PrintSerializer ser;
-    ser.Initialize(&m);
+//    PrintSerializer ser;
+//    ser.Initialize(&m);
 
 
 

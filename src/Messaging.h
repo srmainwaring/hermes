@@ -18,19 +18,8 @@ class Field;
 
 class Message;
 
-
-
-class Visitor {
-
-public:
-    virtual void visit(const Field<int>* field) = 0;
-    virtual void visit(const Field<double>* field) = 0;
-    virtual void visit(const Field<std::string>* field) = 0;
-    virtual void visit(const Field<Message>* field) = 0;
-
-};
-
-
+//template <class U>
+class Visitor;
 
 
 
@@ -39,7 +28,10 @@ public:
 
 
 class Visitable {
+
 public:
+//    template <class U>
+//    virtual void Accept(Visitor& visitor) const {}
     virtual void Accept(Visitor& visitor) const = 0;
 };
 
@@ -55,13 +47,17 @@ protected:
 
 public:
     FieldBase(std::string name, std::string unit, std::string description) :
-            m_name(name), m_unit(unit), m_description(description) {}
+            m_name(std::move(name)), m_unit(std::move(unit)), m_description(std::move(description)) {}
 
-    FieldBase(std::string name, std::string description) : FieldBase(name, "", description) {}
+    FieldBase(std::string name, std::string description) :
+            FieldBase(std::move(name), "", std::move(description)) {}
 
     std::string GetName() const { return m_name; }
     std::string GetUnit() const { return m_unit; }
     std::string GetDescription() const { return m_description; }
+
+//    template <class U>
+    void Accept(Visitor& visitor) const {}
 
 };  // TODO: voir si on conserve cet intermediaire...
 
@@ -79,9 +75,8 @@ public:
     Field(std::string name, std::string unit, std::string description, T* data)
             : m_data(data), FieldBase(name, unit, description) {}
 
-    void Accept(Visitor& visitor) const override {
-        visitor.visit(this);
-    }
+//    template <class U>
+    void Accept(Visitor& visitor) const;
 
     const T* GetData() const {
         return m_data;
@@ -120,39 +115,19 @@ public:
 
     std::string GetName() { return m_name; }
 
-//    template <class T>
-//    void Add(std::string name, std::string unit, std::string description, T* val) {
-//        Add(name, unit, description, val);
-//    }
-
     template <class T>
     void Add(std::string&& name, std::string&& unit, std::string&& description, T* val) {
         m_vector.emplace_back(std::make_unique<Field<T>>(name, unit, description, val));
     }
 
-//    template <class T>
-//    void Add(std::string name, std::string unit, std::string description, const T* val) {
-//        m_vector.emplace_back(std::make_unique<Field<T>>(val));
-//    }
-//
-//    template <class T>
-//    void Add(std::string&& name, std::string&& unit, std::string&& description, const T val) {
-//        Add(name, unit, description, &val);
-//    }
-//
-//    void Accept(Visitor& visitor) const override {
-//        for (const auto& e : m_vector) {
-//            e->Accept(visitor);
-//        }
-//    }
-
     void AddSerializer(Serializer* serializer) {
         m_serializers.push_back(std::unique_ptr<Serializer>(serializer));
     }
 
-    void Accept(Visitor& visitor) const override {
-        for (const auto& e : m_vector) {
-            e->Accept(visitor);
+//    template <class U>
+    void Accept(Visitor& visitor) const {
+        for (const auto& fbUPtr : m_vector) {
+            fbUPtr->Accept(visitor);
         }
     }
 
@@ -165,6 +140,38 @@ public:
     const_iterator cend() { return m_vector.cend(); }
 
 };
+
+//template <class U>
+class Visitor {
+
+private:
+    bool m_recursive = true;
+
+public:
+
+    void RecursiveON() { m_recursive = true; }
+    void ResursiveOFF() { m_recursive = false; }
+
+    virtual void visit(const Field<int>* field) {}
+    virtual void visit(const Field<double>* field) {}
+    virtual void visit(const Field<std::string>* field) {}
+    virtual void visit(const Field<Message>* field) {
+        if (m_recursive) {
+            field->GetData()->Accept(*this);
+        } else {
+            std::cout << "NON RECURSIVE";
+        }
+    }
+
+};
+
+
+
+template <class T>
+//template <class U>
+void Field<T>::Accept(Visitor &visitor) const {
+    visitor.visit(this);
+}
 
 
 
@@ -179,12 +186,22 @@ public:
     void visit(const Field<std::string>* field) override {
         std::cout << "I am a string : "<< *field->GetData() << "\n";
     }
-    void visit(const Field<Message>* field) override {
-        std::cout << "\tI am a message and I am visiting myself:\n";
-        field->GetData()->Accept(*this);
-
-    }
+//    void visit(const Field<Message>* field) override {
+//        std::cout << "\tI am a message and I am visiting myself:\n";
+//        field->GetData()->Accept(*this);
+//
+//    }
+//    void visit(const Field<Message>* field) override {
+//        std::cout << "DE LA BALLE BABY";
+//    }
 };
+
+//class GetNameVisitor : public Visitor {
+//public:
+//    void visit(const Field<int>* field) override {
+//
+//    }
+//};
 
 
 //void PrintVisitor::visit(const Field<int> *field) {
