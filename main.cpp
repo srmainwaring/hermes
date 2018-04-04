@@ -20,14 +20,14 @@ int main() {
     o.d = 3.14989796584651681;
     o.str = "coucou";
 
-    Message m("message1", "Le premier message");
+    Message m("MSG1", "Le premier message");
 
 
-    m.Add<int>("entier", "m/s", "Un entier", &o.i);
-    m.Add<double>("double", "km", "Un double", &o.d);
-    m.Add<std::string>("string", "--", "Une chaine", &o.str);
+    m.Add<int>("Nb", "m/s", "Un entier", &o.i);
+    m.Add<double>("pi", "km", "Un double", &o.d);
+    m.Add<std::string>("name", "--", "Une chaine", &o.str);
 
-    Message m2("message2", "Un second message");
+    Message m2("MSG2", "Un second message");
 
     int i = 23;
     double d = 1.414;
@@ -46,10 +46,14 @@ int main() {
 //    PrintSerializer ser;
 //    ser.Initialize(&m);
 
-    auto serializer = std::make_shared<CSVSerializer>();
-    serializer->SetDelimiter(",");
+    auto csvSerializer = std::make_shared<CSVSerializer>();
+    csvSerializer->SetDelimiter(",");
+    m.AddSerializer(csvSerializer);
 
-    m.AddSerializer(serializer);
+
+    auto printSerializer = std::make_shared<PrintSerializer>();
+    m.AddSerializer(printSerializer);
+
 
 
     m.Initialize();

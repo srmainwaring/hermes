@@ -10,7 +10,9 @@
 #include <vector>
 #include <iostream>
 #include <sstream>
+#include <fstream>
 
+#include "fmt/format.h"
 
 // Forwards declarations
 template <class T>
@@ -103,8 +105,8 @@ public:
 
     Message(std::string&& name, std::string&& description) : m_name(name), m_description(description) {}
 
-    std::string GetName() { return m_name; }
-    std::string GetDescription() { return m_description; }
+    std::string GetName() const { return m_name; }
+    std::string GetDescription() const { return m_description; }
 
     template <class T>
     void Add(std::string&& name, std::string&& unit, std::string&& description, T* val) {
@@ -165,8 +167,6 @@ struct Visitor {
 
 };
 
-
-
 template <class T>
 void Field<T>::Accept(Visitor &visitor) const {
     visitor.visit(this);
@@ -174,24 +174,126 @@ void Field<T>::Accept(Visitor &visitor) const {
 
 
 
-class PrintVisitor : public Visitor {
+//class PrintVisitor : public Visitor {
+//public:
+//    void visit(const Field<int>* field) override {
+//        std::cout << "I am an int : "<< *field->GetData() << "\n";
+//    }
+//    void visit(const Field<double>* field) override {
+//        std::cout << "I am a double : "<< *field->GetData() << "\n";
+//    }
+//    void visit(const Field<std::string>* field) override {
+//        std::cout << "I am a string : "<< *field->GetData() << "\n";
+//    }
+//    void visit(const Field<Message>* field) override {
+//        std::cout << "\tI am a message and I am visiting myself:\n";
+//        field->GetData()->Accept(*this);
+//    }
+//};
+
+
+
+
+
+class PrintSerializer : public Serializer {
+
+    class PrintVisitor : public Visitor {
+    protected:
+        std::string m_str="";
+
+    public:
+        std::string GetOutput() {
+            return m_str;
+        }
+    };
+
+    class InitVisitor : public PrintVisitor {
+
+        inline void visit(FieldBase* field) {
+            std::ostringstream ss;
+            ss << "  * " << field->GetName() << " (" << field->GetUnit() << ") : " << field->GetDescription() << "\n";
+            m_str += ss.str(); // TODO : Voir pour utiliser fmt en mode write
+        }
+
+    public:
+//        explicit InitVisitor(CSVSerializer* serializer) : CSVVisitor(serializer) {}
+
+        void visit(const Field<int>* field) override { visit((FieldBase*)field); }
+        void visit(const Field<double>* field) override { visit((FieldBase*)field); }
+        void visit(const Field<std::string>* field) override { visit((FieldBase*)field); }
+        void visit(const Field<Message>* field) override {
+            auto msg = field->GetData();
+
+            std::ostringstream ss;
+            ss << "\n\t[" << msg->GetName() << "] : " << msg->GetDescription() << "\n";
+            m_str += ss.str();
+
+            msg->Accept(*this);
+        }
+    };
+
+    class SerializeVisitor : public PrintVisitor {
+
+    public:
+//        explicit SerializeVisitor(CSVSerializer* serializer) : CSVVisitor(serializer) {}
+
+        void visit(const Field<int>* field) override {
+            std::ostringstream ss;
+//            ss
+//            ss << *field->GetData() << m_serializer->m_delimiter;
+//            m_str += ss.str();
+        }
+        void visit(const Field<double>* field) override {
+//            std::ostringstream ss;
+//            ss << *field->GetData() << m_serializer->m_delimiter;
+//            m_str += ss.str();
+        }
+        void visit(const Field<std::string>* field) override {
+//            std::ostringstream ss;
+//            ss << *field->GetData() << m_serializer->m_delimiter;
+//            m_str += ss.str();
+        }
+        void visit(const Field<Message>* field) override {
+//            field->GetData()->Accept(*this);
+        }
+
+    };
+
+    void MessageHeader(const Message* msg) {
+        std::ostringstream ss;
+        ss << "\n[" << msg->GetName() << "] : " << msg->GetDescription() << "\n";
+        m_str += ss.str();
+    }
+
 public:
-    void visit(const Field<int>* field) override {
-        std::cout << "I am an int : "<< *field->GetData() << "\n";
+    void Initialize(const Message* msg) override {
+        MessageHeader(msg);
+
+        InitVisitor visitor;
+        msg->Accept(visitor);
+        m_str += visitor.GetOutput();
     }
-    void visit(const Field<double>* field) override {
-        std::cout << "I am a double : "<< *field->GetData() << "\n";
+
+    void Serialize(const Message* msg) override {
+        MessageHeader(msg);
+
+        SerializeVisitor visitor;
+        msg->Accept(visitor);
+        m_str = visitor.GetOutput();
     }
-    void visit(const Field<std::string>* field) override {
-        std::cout << "I am a string : "<< *field->GetData() << "\n";
+
+    void Finalize(const Message* msg) override {
+
     }
-    void visit(const Field<Message>* field) override {
-        std::cout << "\tI am a message and I am visiting myself:\n";
-        field->GetData()->Accept(*this);
+
+    void Send(const Message* msg) override {
+        std::cout << m_str << std::endl;
     }
+
+private:
+    std::string m_str;
+
 };
-
-
 
 
 
@@ -264,6 +366,11 @@ private:
 
     };
 
+    void BuildFileName(const Message* msg) {
+        std::ostringstream ss;
+        ss << msg->GetName() << ".csv";
+        m_filename = ss.str();
+    }
 
 public:
 
@@ -271,13 +378,14 @@ public:
 
     void SetDelimiter(const std::string&& delimiter) { m_delimiter = delimiter; }
 
-
     void Initialize(const Message* msg) override {
+        // Building the file name based on rule on message
+        BuildFileName(msg);
+
         InitVisitor visitor(this);
         msg->Accept(visitor);
         m_str = visitor.GetCSVLine();
 
-        // TODO: initialiser le fichier !!
     }
 
     void Serialize(const Message* msg) override {
@@ -286,7 +394,17 @@ public:
     }
     void Finalize(const Message* msg) override {}
     void Send(const Message* msg) override {
-        std::cout << m_str;
+
+        if (c_IsInitialized) {
+            m_file.open(m_filename, std::ios::app);
+        } else {
+            m_file.open(m_filename, std::ios::trunc);
+            c_IsInitialized = true;
+        }
+
+        m_file << m_str;
+        m_file.close();
+
     }
 
 private:
@@ -296,6 +414,10 @@ private:
 
     SerializeVisitor m_serializeVisitor;
 
+    std::string m_filename;
+    std::ofstream m_file;
+
+    bool c_IsInitialized = false;
 
 };
 
