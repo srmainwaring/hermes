@@ -299,16 +299,13 @@ private:
                 SerializationVisitor<CSVSerializer>(serializer) {}
 
         void visit(const Field<int>* field) override {
-            m_serializer->m_w.write("{:<20d}{:s}", *field->GetData(), m_serializer->m_delimiter);
-//            m_serializer->m_w << *field->GetData() << m_serializer->m_delimiter;
+            m_serializer->m_w.write("{:<10d}{:s}", *field->GetData(), m_serializer->m_delimiter);
         }
         void visit(const Field<double>* field) override {
             m_serializer->m_w.write("{:<20.12g}{:s}", *field->GetData(), m_serializer->m_delimiter);
-//            m_serializer->m_w << *field->GetData() << m_serializer->m_delimiter;
         }
         void visit(const Field<std::string>* field) override {
             m_serializer->m_w.write("{:<20s}{:s}", *field->GetData(), m_serializer->m_delimiter);
-//            m_serializer->m_w << *field->GetData() << m_serializer->m_delimiter;
         }
         void visit(const Field<Message>* field) override {
             field->GetData()->Accept(*this);
