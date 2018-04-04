@@ -29,8 +29,8 @@ int main() {
 
     Message m2("MSG2", "Un second message");
 
-    int i = 23;
-    double d = 1.414;
+    int i = -23;
+    double d = -1.414;
 
     m2.Add<int>("entier2", "", "Second entier", &i);
     m2.Add<double>("double2", "kk", "Second double", &d);
@@ -47,7 +47,7 @@ int main() {
 //    ser.Initialize(&m);
 
     auto csvSerializer = std::make_shared<CSVSerializer>();
-    csvSerializer->SetDelimiter(",");
+//    csvSerializer->SetDelimiter(",");
     m.AddSerializer(csvSerializer);
 
 

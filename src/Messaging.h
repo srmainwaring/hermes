@@ -215,12 +215,12 @@ class PrintSerializer : public Serializer {
                                     field->GetName(), field->GetUnit(), *field->GetData());
         }
 
-        void visit(const Field<double>* field) override {
+        void visit(const Field<double>* field) override {  // TODO: parametrer les formats...
             m_serializer->m_w.write("  * {:>10s} ({:^5s}) : {:.12g}\n",
                                     field->GetName(), field->GetUnit(), *field->GetData());
         }
 
-        void visit(const Field<std::string>* field) override {
+        void visit(const Field<std::string>* field) override {  // TODO: parametrer les formats...
             m_serializer->m_w.write("  * {:>10s} ({:^5s}) : {:s}\n",
                                     field->GetName(), field->GetUnit(), *field->GetData());
         }
@@ -299,13 +299,16 @@ private:
                 SerializationVisitor<CSVSerializer>(serializer) {}
 
         void visit(const Field<int>* field) override {
-            m_serializer->m_w << *field->GetData() << m_serializer->m_delimiter;
+            m_serializer->m_w.write("{:<20d}{:s}", *field->GetData(), m_serializer->m_delimiter);
+//            m_serializer->m_w << *field->GetData() << m_serializer->m_delimiter;
         }
         void visit(const Field<double>* field) override {
-            m_serializer->m_w << *field->GetData() << m_serializer->m_delimiter;
+            m_serializer->m_w.write("{:<20.12g}{:s}", *field->GetData(), m_serializer->m_delimiter);
+//            m_serializer->m_w << *field->GetData() << m_serializer->m_delimiter;
         }
         void visit(const Field<std::string>* field) override {
-            m_serializer->m_w << *field->GetData() << m_serializer->m_delimiter;
+            m_serializer->m_w.write("{:<20s}{:s}", *field->GetData(), m_serializer->m_delimiter);
+//            m_serializer->m_w << *field->GetData() << m_serializer->m_delimiter;
         }
         void visit(const Field<Message>* field) override {
             field->GetData()->Accept(*this);
