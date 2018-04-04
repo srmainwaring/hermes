@@ -59,9 +59,11 @@ int main() {
     m.Initialize();
     m.Send();
 
+    for (int idx=0; idx<1000; ++idx) {
+        m.Serialize();
+        m.Send();
+    }
 
-    m.Serialize();
-    m.Send();
 
 
 
