@@ -2,7 +2,7 @@
 
 #include "src/Messaging.h"
 #include "src/Serializer.h"
-
+#include "fmt/format.h"
 //using namespace std;
 
 struct Obj {
@@ -44,14 +44,42 @@ int main() {
 
     m.AddField<float>("float", "", "Un float", &f);
 
-    // Building a CSV serializer
-    auto csvSerializer = std::make_shared<CSVSerializer>();
-//    csvSerializer->SetDelimiter(",");
-    m.AddSerializer(csvSerializer);
 
-    // Building a print serializer
-    auto printSerializer = std::make_shared<PrintSerializer>();
-    m.AddSerializer(printSerializer);
+    // Adding two standard serializers
+    CSVSerializer* csvSerializer = m.AddCSVSerializer();
+    csvSerializer->SetDelimiter(" ; ");
+
+//    PrintSerializer* printSerializer = m.AddPrintSerializer();
+
+    // Adding a vector
+    std::vector<double> vector;
+    vector.reserve(10);
+
+    double val = 0;
+    double dt = 0.2;
+    for (int idx=0; idx<10; ++idx) {
+        vector.push_back(val);
+        val += dt;
+//        std::cout << val;
+    }
+
+
+    // Essai pour renseigner dans un message
+    std::string fieldame;
+    for (int idx=0; idx<vector.size(); ++idx) {
+        fieldame = fmt::format("x_{:d}", idx);
+//        std::cout << fieldame << std::endl;
+        m.AddField(fieldame, "", "", &vector[idx]);
+
+    }
+
+    m.AddPrintSerializer();
+
+
+
+
+
+
 
     // Initializing the message
     m.Initialize();

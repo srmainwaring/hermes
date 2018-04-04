@@ -85,6 +85,8 @@ public:
 
 };
 
+class CSVSerializer;
+class PrintSerializer;
 
 /*
  * The message class that enclose a vector of fields.
@@ -98,7 +100,7 @@ private:
     typedef std::vector<std::unique_ptr<FieldBase>> VectorType;
     VectorType m_fields;
 
-    std::vector<std::shared_ptr<Serializer>> m_serializers;
+    std::vector<std::unique_ptr<Serializer>> m_serializers;
 
 
 public:
@@ -109,13 +111,20 @@ public:
     std::string GetDescription() const { return m_description; }
 
     template <class T>
-    Field<T>* AddField(std::string &&name, std::string &&unit, std::string &&description, T *val) {
+    Field<T>* AddField(std::string name, std::string unit, std::string description, T *val) {
         m_fields.emplace_back(std::make_unique<Field<T>>(name, unit, description, val));
     }
 
-    void AddSerializer(std::shared_ptr<Serializer> serializer) {
-        m_serializers.push_back(serializer);
+    Serializer* AddSerializer(Serializer* serializer) {
+
+        m_serializers.push_back(std::unique_ptr<Serializer>(serializer));
+        return m_serializers[m_serializers.size()-1].get();
     }
+
+    CSVSerializer* AddCSVSerializer();
+
+    PrintSerializer* AddPrintSerializer();
+
 
     void ApplyVisitor(Visitor &visitor) const {
         for (const auto& fieldUPtr : m_fields) {
@@ -276,7 +285,6 @@ private:
     SerializeVisitor m_serializeVisitor;
 
 };
-
 
 
 class CSVSerializer : public Serializer {
