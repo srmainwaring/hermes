@@ -9,20 +9,20 @@
 #include <memory>
 #include <vector>
 #include <iostream>
-//#include "Serializer.h"
 
 
+// Forwards declarations
 template <class T>
 class Field;
 
 class Message;
 
-//template <class U>
 class Visitor;
 
-
-
-
+/*
+ * Pure abstract class for field representation. This class is intended to be used as homogeneous element of a message
+ * inside a std::vector<FieldBase> which is enclosed into the Message class.
+ */
 class FieldBase {
 
 protected:
@@ -41,26 +41,24 @@ public:
     std::string GetUnit() const { return m_unit; }
     std::string GetDescription() const { return m_description; }
 
-//    template <class U>
     virtual void Accept(Visitor& visitor) const = 0;
 
-};  // TODO: voir si on conserve cet intermediaire...
+};
 
-
-
-
+/*
+ * Implementation class for Fields. It is templatged with the type of data it points to.
+ */
 template <class T>
 class Field : public FieldBase {
 
 private:
 
-    T* m_data = nullptr;
+    const T* m_data = nullptr;
 
 public:
     Field(std::string name, std::string unit, std::string description, T* data)
             : m_data(data), FieldBase(name, unit, description) {}
 
-//    template <class U>
     void Accept(Visitor& visitor) const override;
 
     const T* GetData() const {
@@ -69,7 +67,10 @@ public:
 
 };
 
-
+/*
+ * Abstract base class for the serialization of messages. It must use visitor pattern to serialize following its
+ * different stages
+ */
 class Serializer {
 
 public:
@@ -81,81 +82,65 @@ public:
 
 };
 
-
-
-class Message {  // Message ne derive plus de FieldBase
+/*
+ * The message class that enclose a vector of fields.
+ */
+class Message {
 
 private:
     std::string m_name;
     std::string m_description;
 
     typedef std::vector<std::unique_ptr<FieldBase>> VectorType;
-    VectorType m_vector;
+    VectorType m_fields;
 
     std::vector<std::unique_ptr<Serializer>> m_serializers;
 
 
 public:
 
-//    explicit Message(std::string&& name, std::string&& description) : FieldBase(name, description) {}
     Message(std::string&& name, std::string&& description) : m_name(name), m_description(description) {}
 
     std::string GetName() { return m_name; }
+    std::string GetDescription() { return m_description; }
 
     template <class T>
     void Add(std::string&& name, std::string&& unit, std::string&& description, T* val) {
-        m_vector.emplace_back(std::make_unique<Field<T>>(name, unit, description, val));
+        m_fields.emplace_back(std::make_unique<Field<T>>(name, unit, description, val));
     }
 
     void AddSerializer(Serializer* serializer) {
         m_serializers.push_back(std::unique_ptr<Serializer>(serializer));
     }
 
-//    template <class U>
     void Accept(Visitor& visitor) const {
-        for (const auto& fbUPtr : m_vector) {
-            fbUPtr->Accept(visitor);
+        for (const auto& fieldUPtr : m_fields) {
+            fieldUPtr->Accept(visitor);
         }
     }
 
     // Iterators definition over the container
     typedef VectorType::iterator iterator;
-    iterator begin() { return m_vector.begin(); }
-    iterator end() { return m_vector.end(); }
+    iterator begin() { return m_fields.begin(); }
+    iterator end() { return m_fields.end(); }
     typedef VectorType::const_iterator const_iterator;
-    const_iterator cbegin() { return m_vector.cbegin(); }
-    const_iterator cend() { return m_vector.cend(); }
+    const_iterator cbegin() { return m_fields.cbegin(); }
+    const_iterator cend() { return m_fields.cend(); }
 
 };
 
-//template <class U>
-class Visitor {
+struct Visitor {
 
-private:
-    bool m_recursive = true;
-
-public:
-
-    void RecursiveON() { m_recursive = true; }
-    void ResursiveOFF() { m_recursive = false; }
-
-    virtual void visit(const Field<int>* field) {}
-    virtual void visit(const Field<double>* field) {}
-    virtual void visit(const Field<std::string>* field) {}
-    virtual void visit(const Field<Message>* field) {
-        if (m_recursive) {
-            field->GetData()->Accept(*this);
-        } else {
-            std::cout << "NON RECURSIVE";
-        }
-    }
+    virtual void visit(const Field<int>* field) = 0;
+    virtual void visit(const Field<double>* field) = 0;
+    virtual void visit(const Field<std::string>* field) = 0;
+    virtual void visit(const Field<Message>* field) = 0;
 
 };
 
 
 
 template <class T>
-//template <class U>
 void Field<T>::Accept(Visitor &visitor) const {
     visitor.visit(this);
 }
@@ -173,14 +158,10 @@ public:
     void visit(const Field<std::string>* field) override {
         std::cout << "I am a string : "<< *field->GetData() << "\n";
     }
-//    void visit(const Field<Message>* field) override {
-//        std::cout << "\tI am a message and I am visiting myself:\n";
-//        field->GetData()->Accept(*this);
-//
-//    }
-//    void visit(const Field<Message>* field) override {
-//        std::cout << "DE LA BALLE BABY";
-//    }
+    void visit(const Field<Message>* field) override {
+        std::cout << "\tI am a message and I am visiting myself:\n";
+        field->GetData()->Accept(*this);
+    }
 };
 
 
