@@ -304,25 +304,14 @@ private:
     class CSVVisitor : public Visitor {
     protected:
         CSVSerializer* m_serializer;
-
-        fmt::MemoryWriter m_w;
-
         explicit CSVVisitor(CSVSerializer* serializer) : m_serializer(serializer) {}
 
-    public:
-        void Clear() {
-            m_w.clear();
-        }
-
-        const char* GetCSVLine() {
-            return m_w.c_str();
-        }
     };
 
     class InitVisitor : public CSVVisitor {
 
         inline void visit(FieldBase* field) {
-            m_w << field->GetName() << m_serializer->m_delimiter;
+            m_serializer->m_w << field->GetName() << m_serializer->m_delimiter;
         }
 
     public:
@@ -342,13 +331,13 @@ private:
         explicit SerializeVisitor(CSVSerializer* serializer) : CSVVisitor(serializer) {}
 
         void visit(const Field<int>* field) override {
-            m_w << *field->GetData() << m_serializer->m_delimiter;
+            m_serializer->m_w << *field->GetData() << m_serializer->m_delimiter;
         }
         void visit(const Field<double>* field) override {
-            m_w << *field->GetData() << m_serializer->m_delimiter;
+            m_serializer->m_w << *field->GetData() << m_serializer->m_delimiter;
         }
         void visit(const Field<std::string>* field) override {
-            m_w << *field->GetData() << m_serializer->m_delimiter;
+            m_serializer->m_w << *field->GetData() << m_serializer->m_delimiter;
         }
         void visit(const Field<Message>* field) override {
             field->GetData()->Accept(*this);
@@ -360,7 +349,7 @@ private:
         m_filename = fmt::format("{}.csv", msg->GetName());
     }
 
-    std::string GetLine() {
+    std::string GetCSVLine() {
         // Post-processing the string to remove the trailing delimiter and adding a final line break
         std::string str = m_w.str();
         str.erase(str.size()-m_delimiter.size());
@@ -380,16 +369,10 @@ public:
 
         InitVisitor visitor(this);
         msg->Accept(visitor);
-        m_w.clear();
-        m_w << visitor.GetCSVLine();
-
     }
 
     void Serialize(const Message* msg) override {
-        m_serializeVisitor.Clear();
         msg->Accept(m_serializeVisitor);
-        m_w.clear();
-        m_w << m_serializeVisitor.GetCSVLine();
     }
     void Finalize(const Message* msg) override {}
     void Send(const Message* msg) override {
@@ -401,10 +384,11 @@ public:
             c_IsInitialized = true;
         }
 
-        m_file << GetLine();
-        m_file.close();
-        m_w.clear();
+        m_file << GetCSVLine();
 
+        m_file.close();
+
+        m_w.clear();
     }
 
 private:
