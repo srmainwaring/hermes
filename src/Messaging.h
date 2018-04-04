@@ -109,7 +109,7 @@ public:
     std::string GetDescription() const { return m_description; }
 
     template <class T>
-    void AddField(std::string &&name, std::string &&unit, std::string &&description, T *val) {
+    Field<T>* AddField(std::string &&name, std::string &&unit, std::string &&description, T *val) {
         m_fields.emplace_back(std::make_unique<Field<T>>(name, unit, description, val));
     }
 
@@ -117,7 +117,7 @@ public:
         m_serializers.push_back(serializer);
     }
 
-    void Accept(Visitor& visitor) const {
+    void ApplyVisitor(Visitor &visitor) const {
         for (const auto& fieldUPtr : m_fields) {
             fieldUPtr->Accept(visitor);
         }
@@ -204,7 +204,7 @@ class PrintSerializer : public Serializer {
         void visit(const Field<Message>* field) override {
             auto msg = field->GetData();
             m_serializer->m_w.write("\n[{}] : {}\n", msg->GetName(), msg->GetDescription());
-            msg->Accept(*this);
+            msg->ApplyVisitor(*this);
         }
     };
 
@@ -236,7 +236,7 @@ class PrintSerializer : public Serializer {
 
         void visit(const Field<Message>* field) override {
             auto msg = field->GetData();
-            msg->Accept(*this);
+            msg->ApplyVisitor(*this);
         }
 
     };
@@ -254,12 +254,12 @@ public:
         WriteHeader(msg);
 
         InitVisitor visitor(this);
-        msg->Accept(visitor);
+        msg->ApplyVisitor(visitor);
     }
 
     void Serialize(const Message* msg) override {
         WriteHeader(msg);
-        msg->Accept(m_serializeVisitor);
+        msg->ApplyVisitor(m_serializeVisitor);
     }
 
     void Finalize(const Message* msg) override {
@@ -298,7 +298,7 @@ private:
         void visit(const Field<double>* field) override { visit((FieldBase*)field); }
         void visit(const Field<std::string>* field) override { visit((FieldBase*)field); }
         void visit(const Field<Message>* field) override {
-            field->GetData()->Accept(*this);
+            field->GetData()->ApplyVisitor(*this);
         }
     };
 
@@ -321,7 +321,7 @@ private:
             m_serializer->m_w.write("{:<20s}{:s}", *field->GetData(), m_serializer->m_delimiter);
         }
         void visit(const Field<Message>* field) override {
-            field->GetData()->Accept(*this);
+            field->GetData()->ApplyVisitor(*this);
         }
 
     };
@@ -349,11 +349,11 @@ public:
         BuildFileName(msg);
 
         InitVisitor visitor(this);
-        msg->Accept(visitor);
+        msg->ApplyVisitor(visitor);
     }
 
     void Serialize(const Message* msg) override {
-        msg->Accept(m_serializeVisitor);
+        msg->ApplyVisitor(m_serializeVisitor);
     }
 
     void Finalize(const Message* msg) override {}
