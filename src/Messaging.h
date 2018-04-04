@@ -23,21 +23,6 @@ class Visitor;
 
 
 
-
-
-
-//class Visitable {
-//
-//public:
-////    template <class U>
-////    virtual void Accept(Visitor& visitor) const {}
-//    virtual void Accept(Visitor& visitor) const = 0;
-//};
-
-
-
-
-//class FieldBase : public Visitable {
 class FieldBase {
 
 protected:
