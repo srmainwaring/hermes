@@ -191,43 +191,38 @@ void Field<T>::Accept(Visitor &visitor) const {
 //    }
 //};
 
-
+//class SerializerVisitor : public Visitor {
+//protected:
+//    Serializer* m_serializer;
+//    explicit SerializerVisitor(Serializer* serializer) : m_serializer(serializer) {}
+//};
 
 
 
 class PrintSerializer : public Serializer {
 
-    class PrintVisitor : public Visitor {
+    class PrintVisitor : public Visitor { // TODO: cette classe est eligible au template
     protected:
-        std::string m_str="";
-
-    public:
-        std::string GetOutput() {
-            return m_str;
-        }
+        PrintSerializer* m_serializer;
+        explicit PrintVisitor(PrintSerializer* serializer) : m_serializer(serializer) {}
     };
 
     class InitVisitor : public PrintVisitor {
 
         inline void visit(FieldBase* field) {
-            std::ostringstream ss;
-            ss << "  * " << field->GetName() << " (" << field->GetUnit() << ") : " << field->GetDescription() << "\n";
-            m_str += ss.str(); // TODO : Voir pour utiliser fmt en mode write
+            m_serializer->m_w.write("  * {:>10s} ({:^5s}) : {:50s}\n",
+                                    field->GetName(), field->GetUnit(), field->GetDescription());
         }
 
     public:
-//        explicit InitVisitor(CSVSerializer* serializer) : CSVVisitor(serializer) {}
+        explicit InitVisitor(PrintSerializer* serializer) : PrintVisitor(serializer) {}
 
         void visit(const Field<int>* field) override { visit((FieldBase*)field); }
         void visit(const Field<double>* field) override { visit((FieldBase*)field); }
         void visit(const Field<std::string>* field) override { visit((FieldBase*)field); }
         void visit(const Field<Message>* field) override {
             auto msg = field->GetData();
-
-            std::ostringstream ss;
-            ss << "\n\t[" << msg->GetName() << "] : " << msg->GetDescription() << "\n";
-            m_str += ss.str();
-
+            m_serializer->m_w.write("\n[{}] : {}\n", msg->GetName(), msg->GetDescription());
             msg->Accept(*this);
         }
     };
@@ -235,51 +230,51 @@ class PrintSerializer : public Serializer {
     class SerializeVisitor : public PrintVisitor {
 
     public:
-//        explicit SerializeVisitor(CSVSerializer* serializer) : CSVVisitor(serializer) {}
+        explicit SerializeVisitor(PrintSerializer* serializer) : PrintVisitor(serializer) {}
 
-        void visit(const Field<int>* field) override {
-            std::ostringstream ss;
-//            ss
-//            ss << *field->GetData() << m_serializer->m_delimiter;
-//            m_str += ss.str();
+        void visit(const Field<int>* field) override {  // TODO: parametrer les formats...
+            m_serializer->m_w.write("  * {:>10s} ({:^5s}) : {:d}\n",
+                                    field->GetName(), field->GetUnit(), *field->GetData());
         }
+
         void visit(const Field<double>* field) override {
-//            std::ostringstream ss;
-//            ss << *field->GetData() << m_serializer->m_delimiter;
-//            m_str += ss.str();
+            m_serializer->m_w.write("  * {:>10s} ({:^5s}) : {:.12g}\n",
+                                    field->GetName(), field->GetUnit(), *field->GetData());
         }
+
         void visit(const Field<std::string>* field) override {
-//            std::ostringstream ss;
-//            ss << *field->GetData() << m_serializer->m_delimiter;
-//            m_str += ss.str();
+            m_serializer->m_w.write("  * {:>10s} ({:^5s}) : {:s}\n",
+                                    field->GetName(), field->GetUnit(), *field->GetData());
         }
+
         void visit(const Field<Message>* field) override {
-//            field->GetData()->Accept(*this);
+            auto msg = field->GetData();
+//            m_serializer->m_w.write(("\t\n[{}] : {}\n", msg->GetName(), msg->GetDescription()));
+//            m_serializer->m_w.write("\n\t[MESSAGE]\n");
+            msg->Accept(*this);
         }
 
     };
 
-    void MessageHeader(const Message* msg) {
-        std::ostringstream ss;
-        ss << "\n[" << msg->GetName() << "] : " << msg->GetDescription() << "\n";
-        m_str += ss.str();
+    void WriteHeader(const Message* msg) {
+        m_w.write("\n[{}] : {}\n", msg->GetName(), msg->GetDescription());
     }
 
 public:
-    void Initialize(const Message* msg) override {
-        MessageHeader(msg);
 
-        InitVisitor visitor;
+    PrintSerializer() : m_serializeVisitor(this) {}
+
+    void Initialize(const Message* msg) override {
+        // Writing message header
+        WriteHeader(msg);
+
+        InitVisitor visitor(this);
         msg->Accept(visitor);
-        m_str += visitor.GetOutput();
     }
 
     void Serialize(const Message* msg) override {
-        MessageHeader(msg);
-
-        SerializeVisitor visitor;
-        msg->Accept(visitor);
-        m_str = visitor.GetOutput();
+        WriteHeader(msg);
+        msg->Accept(m_serializeVisitor);
     }
 
     void Finalize(const Message* msg) override {
@@ -287,11 +282,16 @@ public:
     }
 
     void Send(const Message* msg) override {
-        std::cout << m_str << std::endl;
+        std::cout << m_w.c_str();
+        m_w.clear();
     }
 
 private:
-    std::string m_str;
+//    std::string m_str;
+    fmt::MemoryWriter m_w;
+
+    SerializeVisitor m_serializeVisitor;
+//    static std::string c_prefix = "";
 
 };
 
@@ -374,7 +374,9 @@ public:
     void Serialize(const Message* msg) override {
         msg->Accept(m_serializeVisitor);
     }
+
     void Finalize(const Message* msg) override {}
+
     void Send(const Message* msg) override {
 
         if (c_IsInitialized) {
@@ -406,6 +408,12 @@ private:
 
 };
 
+
+//template <class T>
+//void WriteStdVector(std::vector<T>* vector) {
+//    fmt::MemoryWriter writer;
+//
+//}
 
 
 #endif //MESSAGING_POLYMORPHISM_MESSAGING_H
