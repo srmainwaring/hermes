@@ -12,7 +12,6 @@
 //#include "Serializer.h"
 
 
-//class Visitable;
 template <class T>
 class Field;
 
@@ -27,18 +26,19 @@ class Visitor;
 
 
 
-class Visitable {
-
-public:
-//    template <class U>
-//    virtual void Accept(Visitor& visitor) const {}
-    virtual void Accept(Visitor& visitor) const = 0;
-};
-
-
+//class Visitable {
+//
+//public:
+////    template <class U>
+////    virtual void Accept(Visitor& visitor) const {}
+//    virtual void Accept(Visitor& visitor) const = 0;
+//};
 
 
-class FieldBase : public Visitable {
+
+
+//class FieldBase : public Visitable {
+class FieldBase {
 
 protected:
     std::string m_name = "";
@@ -57,7 +57,7 @@ public:
     std::string GetDescription() const { return m_description; }
 
 //    template <class U>
-    void Accept(Visitor& visitor) const {}
+    virtual void Accept(Visitor& visitor) const = 0;
 
 };  // TODO: voir si on conserve cet intermediaire...
 
@@ -76,7 +76,7 @@ public:
             : m_data(data), FieldBase(name, unit, description) {}
 
 //    template <class U>
-    void Accept(Visitor& visitor) const;
+    void Accept(Visitor& visitor) const override;
 
     const T* GetData() const {
         return m_data;
@@ -125,7 +125,7 @@ public:
     }
 
 //    template <class U>
-    void Accept(Visitor& visitor) const {
+    void Accept(Visitor& visitor) const override {
         for (const auto& fbUPtr : m_vector) {
             fbUPtr->Accept(visitor);
         }
@@ -196,26 +196,6 @@ public:
 //    }
 };
 
-//class GetNameVisitor : public Visitor {
-//public:
-//    void visit(const Field<int>* field) override {
-//
-//    }
-//};
-
-
-//void PrintVisitor::visit(const Field<int> *field) {
-////    std::cout << "I am an int : "<< field->GetData() << "\n";
-//}
-//void PrintVisitor::visit(const Field<double> *field) {
-////    std::cout << "I am a double : "<< field->GetData() << "\n";
-//}
-//void PrintVisitor::visit(const Field<std::string> *field) {
-////    std::cout << "I am a string : "<< field->GetData() << "\n";
-//}
-//void PrintVisitor::visit(const Field<Message> *field) {
-//    std::cout << "\tI am a message and I am visiting myself:\n";
-//}
 
 
 #endif //MESSAGING_POLYMORPHISM_MESSAGING_H
