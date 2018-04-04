@@ -161,9 +161,12 @@ public:
 struct Visitor {
 
     virtual void visit(const Field<int>* field) = 0;
+    virtual void visit(const Field<float>* field) = 0;
     virtual void visit(const Field<double>* field) = 0;
     virtual void visit(const Field<std::string>* field) = 0;
     virtual void visit(const Field<Message>* field) = 0;
+
+//    virtual void visit(const Field<std::vector<int>>* field) = 0;
 
 };
 
@@ -195,6 +198,7 @@ class PrintSerializer : public Serializer {
                 SerializationVisitor<PrintSerializer>(serializer) {}
 
         void visit(const Field<int>* field) override { visit((FieldBase*)field); }
+        void visit(const Field<float>* field) override { visit((FieldBase*)field); }
         void visit(const Field<double>* field) override { visit((FieldBase*)field); }
         void visit(const Field<std::string>* field) override { visit((FieldBase*)field); }
         void visit(const Field<Message>* field) override {
@@ -212,6 +216,11 @@ class PrintSerializer : public Serializer {
 
         void visit(const Field<int>* field) override {  // TODO: parametrer les formats...
             m_serializer->m_w.write("  * {:>10s} ({:^5s}) : {:d}\n",
+                                    field->GetName(), field->GetUnit(), *field->GetData());
+        }
+
+        void visit(const Field<float>* field) override {  // TODO: parametrer les formats...
+            m_serializer->m_w.write("  * {:>10s} ({:^5s}) : {:.12g}\n",
                                     field->GetName(), field->GetUnit(), *field->GetData());
         }
 
@@ -285,6 +294,7 @@ private:
                 SerializationVisitor<CSVSerializer>(serializer) {}
 
         void visit(const Field<int>* field) override { visit((FieldBase*)field); }
+        void visit(const Field<float>* field) override { visit((FieldBase*)field); }
         void visit(const Field<double>* field) override { visit((FieldBase*)field); }
         void visit(const Field<std::string>* field) override { visit((FieldBase*)field); }
         void visit(const Field<Message>* field) override {
@@ -300,6 +310,9 @@ private:
 
         void visit(const Field<int>* field) override {
             m_serializer->m_w.write("{:<10d}{:s}", *field->GetData(), m_serializer->m_delimiter);
+        }
+        void visit(const Field<float>* field) override {
+            m_serializer->m_w.write("{:<20.12g}{:s}", *field->GetData(), m_serializer->m_delimiter);
         }
         void visit(const Field<double>* field) override {
             m_serializer->m_w.write("{:<20.12g}{:s}", *field->GetData(), m_serializer->m_delimiter);
@@ -375,13 +388,6 @@ private:
     bool c_IsInitialized = false;
 
 };
-
-
-//template <class T>
-//void WriteStdVector(std::vector<T>* vector) {
-//    fmt::MemoryWriter writer;
-//
-//}
 
 
 #endif //MESSAGING_POLYMORPHISM_MESSAGING_H

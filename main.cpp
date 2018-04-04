@@ -31,12 +31,16 @@ int main() {
 
     int i = -23;
     double d = -1.414;
+    float f = 1.397e12;
+
 
     m2.Add<int>("entier2", "", "Second entier", &i);
     m2.Add<double>("double2", "kk", "Second double", &d);
 
 
     m.Add<Message>("message", "", "Second message", &m2);
+
+    m.Add<float>("float", "", "Un float", &f);
 
 
 //    PrintVisitor v;
