@@ -83,10 +83,11 @@ public:
 
 
 
-class Message : public FieldBase {
+class Message {  // Message ne derive plus de FieldBase
 
 private:
-//    std::string m_name;
+    std::string m_name;
+    std::string m_description;
 
     typedef std::vector<std::unique_ptr<FieldBase>> VectorType;
     VectorType m_vector;
@@ -96,7 +97,8 @@ private:
 
 public:
 
-    explicit Message(std::string&& name, std::string&& description) : FieldBase(name, description) {}
+//    explicit Message(std::string&& name, std::string&& description) : FieldBase(name, description) {}
+    Message(std::string&& name, std::string&& description) : m_name(name), m_description(description) {}
 
     std::string GetName() { return m_name; }
 
@@ -110,7 +112,7 @@ public:
     }
 
 //    template <class U>
-    void Accept(Visitor& visitor) const override {
+    void Accept(Visitor& visitor) const {
         for (const auto& fbUPtr : m_vector) {
             fbUPtr->Accept(visitor);
         }
