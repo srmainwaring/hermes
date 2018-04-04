@@ -39,17 +39,25 @@ int main() {
     m.Add<Message>("message", "", "Second message", &m2);
 
 
-    PrintVisitor v;
-    m.Accept(v);
+//    PrintVisitor v;
+//    m.Accept(v);
 
 
 //    PrintSerializer ser;
 //    ser.Initialize(&m);
 
+    auto serializer = std::make_shared<CSVSerializer>();
+    serializer->SetDelimiter(",");
+
+    m.AddSerializer(serializer);
 
 
+    m.Initialize();
+    m.Send();
 
 
+    m.Serialize();
+    m.Send();
 
 
 

@@ -9,6 +9,7 @@
 #include <memory>
 #include <vector>
 #include <iostream>
+#include <sstream>
 
 
 // Forwards declarations
@@ -75,12 +76,13 @@ class Serializer {
 
 public:
 
-    virtual void Initialize(Message* msg) = 0;
-    virtual void Serialize(Message* msg) = 0;
-    virtual void Finalize(Message* msg) = 0;
-    virtual void Send(Message* msg) = 0;
+    virtual void Initialize(const Message* msg) = 0;
+    virtual void Serialize(const Message* msg) = 0;
+    virtual void Finalize(const Message* msg) = 0;
+    virtual void Send(const Message* msg) = 0;
 
 };
+
 
 /*
  * The message class that enclose a vector of fields.
@@ -94,7 +96,7 @@ private:
     typedef std::vector<std::unique_ptr<FieldBase>> VectorType;
     VectorType m_fields;
 
-    std::vector<std::unique_ptr<Serializer>> m_serializers;
+    std::vector<std::shared_ptr<Serializer>> m_serializers;
 
 
 public:
@@ -109,8 +111,8 @@ public:
         m_fields.emplace_back(std::make_unique<Field<T>>(name, unit, description, val));
     }
 
-    void AddSerializer(Serializer* serializer) {
-        m_serializers.push_back(std::unique_ptr<Serializer>(serializer));
+    void AddSerializer(std::shared_ptr<Serializer> serializer) {
+        m_serializers.push_back(serializer);
     }
 
     void Accept(Visitor& visitor) const {
@@ -118,6 +120,31 @@ public:
             fieldUPtr->Accept(visitor);
         }
     }
+
+    void Initialize() const {
+        for (const auto& serializer : m_serializers) {
+            serializer->Initialize(this);
+        }
+    }
+
+    void Serialize() const {
+        for (const auto& serializer : m_serializers) {
+            serializer->Serialize(this);
+        }
+    }
+
+    void Finalize() const {
+        for (const auto& serializer : m_serializers) {
+            serializer->Finalize(this);
+        }
+    }
+
+    void Send() const {
+        for (const auto& serializer : m_serializers) {
+            serializer->Send(this);
+        }
+    }
+
 
     // Iterators definition over the container
     typedef VectorType::iterator iterator;
@@ -162,6 +189,114 @@ public:
         std::cout << "\tI am a message and I am visiting myself:\n";
         field->GetData()->Accept(*this);
     }
+};
+
+
+
+
+
+class CSVSerializer : public Serializer {
+
+private:
+
+    class CSVVisitor : public Visitor {
+    protected:
+        CSVSerializer* m_serializer;
+
+        std::string m_str="";
+
+        explicit CSVVisitor(CSVSerializer* serializer) : m_serializer(serializer) {}
+
+    public:
+        void PostProcStr() {
+            m_str.erase(m_str.size()-m_serializer->m_delimiter.size());
+            m_str += "\n";
+        }
+
+        std::string GetCSVLine() {
+            PostProcStr();
+            return m_str;
+        }
+    };
+
+    class InitVisitor : public CSVVisitor {
+
+        inline void visit(FieldBase* field) {
+            std::ostringstream ss;
+            ss << field->GetName() << m_serializer->m_delimiter;
+            m_str += ss.str(); // TODO : Voir pour utiliser fmt en mode write
+        }
+
+    public:
+        explicit InitVisitor(CSVSerializer* serializer) : CSVVisitor(serializer) {}
+
+        void visit(const Field<int>* field) override { visit((FieldBase*)field); }
+        void visit(const Field<double>* field) override { visit((FieldBase*)field); }
+        void visit(const Field<std::string>* field) override { visit((FieldBase*)field); }
+        void visit(const Field<Message>* field) override {
+            field->GetData()->Accept(*this);
+        }
+    };
+
+    class SerializeVisitor : public CSVVisitor {
+
+    public:
+        explicit SerializeVisitor(CSVSerializer* serializer) : CSVVisitor(serializer) {}
+
+        void visit(const Field<int>* field) override {
+            std::ostringstream ss;
+            ss << *field->GetData() << m_serializer->m_delimiter;
+            m_str += ss.str();
+        }
+        void visit(const Field<double>* field) override {
+            std::ostringstream ss;
+            ss << *field->GetData() << m_serializer->m_delimiter;
+            m_str += ss.str();
+        }
+        void visit(const Field<std::string>* field) override {
+            std::ostringstream ss;
+            ss << *field->GetData() << m_serializer->m_delimiter;
+            m_str += ss.str();
+        }
+        void visit(const Field<Message>* field) override {
+            field->GetData()->Accept(*this);
+        }
+
+    };
+
+
+public:
+
+    CSVSerializer() : m_serializeVisitor(this) {}
+
+    void SetDelimiter(const std::string&& delimiter) { m_delimiter = delimiter; }
+
+
+    void Initialize(const Message* msg) override {
+        InitVisitor visitor(this);
+        msg->Accept(visitor);
+        m_str = visitor.GetCSVLine();
+
+        // TODO: initialiser le fichier !!
+    }
+
+    void Serialize(const Message* msg) override {
+        msg->Accept(m_serializeVisitor);
+        m_str = m_serializeVisitor.GetCSVLine();
+    }
+    void Finalize(const Message* msg) override {}
+    void Send(const Message* msg) override {
+        std::cout << m_str;
+    }
+
+private:
+
+    std::string m_delimiter=";";
+    std::string m_str = "";
+
+    SerializeVisitor m_serializeVisitor;
+
+
 };
 
 
