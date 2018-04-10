@@ -7,5 +7,4 @@
 
 #include "src/Messaging.h"
 
-
 #endif //FRYDOM_HERMES_H
