@@ -1,16 +1,14 @@
 #include <iostream>
 
-#include "src/Messaging.h"
-#include "src/Serializer.h"
-#include "fmt/format.h"
-//using namespace std;
+#include "hermes.h"
+
+using namespace hermes;
 
 struct Obj {
     int i;
     double d;
     std::string str;
 };
-
 
 
 int main() {
