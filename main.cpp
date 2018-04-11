@@ -76,11 +76,6 @@ int main() {
     m.AddPrintSerializer();
 
 
-
-
-
-
-
     // Initializing the message
     m.Initialize();
     m.Send();

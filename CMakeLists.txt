@@ -11,5 +11,5 @@ target_link_libraries(hermes PRIVATE fmt::fmt-header-only)
 
 
 
-add_executable(messaging_polymorphism main.cpp ${FILES})
-target_link_libraries(messaging_polymorphism PRIVATE fmt::fmt-header-only)
+add_executable(test_hermes main.cpp ${FILES})
+target_link_libraries(test_hermes PRIVATE fmt::fmt-header-only)
