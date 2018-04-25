@@ -1,67 +1,83 @@
 
-# stackoverflow.com/questions/17511496/how-to-create-a-shared-library-with-cmake
+cmake_minimum_required(VERSION 3.11 FATAL_ERROR)
+
+project(hermes LANGUAGES CXX)
 
 
-cmake_minimum_required(VERSION 3.8)
-project(hermes)
+# Cmake scripts
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
+
+# Languages requirements
 set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD_REQUIRED True)
+set(CMAKE_CXX_EXTENSIONS False)
 
-# Guard against in-source builds
-if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_BINARY_DIR})
-    message(FATAL_ERROR "In-source builds not allowed. Please make a new directory (called a build directory) and run CMake from there. You may need to remove CMakeCache.txt. ")
+
+# Version informations
+set(hermes_VERSION_MAJOR   "0")
+set(hermes_VERSION_MINOR   "1")
+set(hermes_VERSION_PATCH   "0")
+set(hermes_VERSION
+  "${hermes_VERSION_MAJOR}.${hermes_VERSION_MINOR}.${hermes_VERSION_PATCH}")
+
+
+# hermes depennds on fmt library
+find_package(fmt QUIET)
+if (NOT fmt_FOUND)
+    include(FetchContent)
+    set(fmt_URL https://github.com/fmtlib/fmt.git)
+    FetchContent_Declare(fmt
+            GIT_REPOSITORY ${fmt_URL}
+            GIT_TAG 4.1.0
+    )
+
+    FetchContent_GetProperties(fmt)
+    if(NOT fmt_POPULATED)
+        message(STATUS "Downloading, Configuring and Generating 'fmt' dependency")
+        FetchContent_Populate(fmt)
+
+        # FMT BUILD OPTIONS
+        set(CMAKE_INSTALL_PREFIX ${CMAKE_CURRENT_BINARY_DIR}/fmt)
+        set(BUILD_SHARED_LIBS TRUE)
+        set(FMT_TEST OFF)
+
+        add_subdirectory(${fmt_SOURCE_DIR} ${fmt_BINARY_DIR})
+    endif()
 endif()
 
-# VERSION INFORMATIONS
-# TODO: aller chercher dans un config.h !
-set(HERMES_MAJOR_VERSION 0)
-set(HERMES_MINOR_VERSION 1)
-set(HERMES_PATCH_VERSION 0)
-set(HERMES_VERSION ${HERMES_MAJOR_VERSION}.${HERMES_MINOR_VERSION}.${HERMES_PATCH_VERSION})
 
 
-#add_subdirectory(fmt)  # TODO: voir si on fait cet import...
+# Creating hermes target
+set(hermes_sources
+        src/hermes/Messaging.cpp
+        )
 
-add_subdirectory(src)
+set(hermes_headers
+        src/hermes/Messaging.h
+        src/hermes/hermes.h
+        )
 
-list(APPEND HERMES_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/fmt)
+add_library(hermes SHARED ${hermes_sources})
+add_library(hermes::hermes ALIAS hermes)
 
-message(STATUS ------->${CMAKE_CURRENT_SOURCE_DIR})
-set(FMT_LIB ${CMAKE_CURRENT_SOURCE_DIR}/fmt/build/fmt/libfmt.so)
+#find_package(fmt REQUIRED)
 
-#list(APPEND HERMES_THIRDPARTY_LIBS ${CMAKE_CURRENT_SOURCE_DIR}/build/libhermes.so)
+target_link_libraries(hermes fmt::fmt) # Buggy ?
 
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/fmt)
+target_include_directories(hermes INTERFACE
+        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>
+        $<INSTALL_INTERFACE:include>)
 
-add_library(hermes SHARED ${HERMES_SRC_FILES})
-target_link_libraries(hermes ${FMT_LIB})
-
-
-#list(APPEND HERMES_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/fmt/fmt)
-list(APPEND HERMES_THIRDPARTY_LIBS ${CMAKE_CURRENT_SOURCE_DIR}/build/libhermes.so)  # TODO: ajouter fmt !!!
-
-#set_target_properties(hermes PROPERTIES PUBLIC_HEADER hermes.h)
-
-
-add_executable(test_hermes main.cpp ${HERMES_SRC_FILES})
-target_link_libraries(test_hermes ${FMT_LIB})
-
-list(APPEND HERMES_LIBS ${CMAKE_CURRENT_SOURCE_DIR}/build/libhermes.so ${FMT_LIB})
+set_target_properties(hermes PROPERTIES
+        VERSION ${hermes_VERSION})
 
 
-# Generating configuration files to make MathUtils easily usable in other projects
-include (CMakePackageConfigHelpers)
-configure_package_config_file(
-        ${CMAKE_CURRENT_SOURCE_DIR}/cmake/HermesConfig.cmake.in
-        ${CMAKE_CURRENT_BINARY_DIR}/HermesConfig.cmake
-        PATH_VARS HERMES_INCLUDE_DIRS HERMES_LIBS# Here we expose these variables as replacement into the MathUtilsConfig.cmake.in
-        INSTALL_DESTINATION ${CMAKE_BINARY_DIR}
-        #    NO_CHECK_REQUIRED_COMPONENTS_MACRO # Eigen does not provide components
-)
+include(GNUInstallDirs)
+#message(${CMAKE_INSTALL_LIBDIR})
+install(TARGETS hermes EXPORT fmt-targets
+        DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
-# Generating the version file
-write_basic_package_version_file(
-        HermesConfigVersion.cmake
-        VERSION ${HERMES_VERSION}
-        COMPATIBILITY SameMajorVersion
-)
+install(FILES ${hermes_headers}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/hermes)
+
