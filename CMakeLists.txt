@@ -58,7 +58,6 @@ set(hermes_headers
         src/hermes/hermes.h
         )
 
-message(STATUS ${hermes_sources})
 
 add_library(hermes SHARED ${hermes_sources})
 add_library(hermes::hermes ALIAS hermes)
