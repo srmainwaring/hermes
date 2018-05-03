@@ -1,12 +1,19 @@
+#=============================================================================
+#
+# CMake configuration file for the hermes project
+#
+#=============================================================================
+
 
 cmake_minimum_required(VERSION 3.11 FATAL_ERROR)
 
 project(hermes LANGUAGES CXX)
 
 
-# Cmake scripts
-list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
-
+# Prevent in-source build
+if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_BINARY_DIR})
+    message( FATAL_ERROR  "In-source build is not possible and not recommended. Choose an empty directory for build output.")
+endif(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_BINARY_DIR})
 
 # Languages requirements
 set(CMAKE_CXX_STANDARD 14)
@@ -21,41 +28,19 @@ set(hermes_VERSION_PATCH   "0")
 set(hermes_VERSION
   "${hermes_VERSION_MAJOR}.${hermes_VERSION_MINOR}.${hermes_VERSION_PATCH}")
 
+# Cmake scripts
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 # hermes depends on fmt library
 include(Add_fmt)
 
-# Creating hermes target
-set(hermes_sources
-        src/hermes/Messaging.cpp
-        )
 
-set(hermes_headers
-        src/hermes/Messaging.h
-        src/hermes/hermes.h
-        )
+# Creating the library
+add_library(hermes SHARED "")
+add_subdirectory(src)
+
+target_link_libraries(hermes fmt)
 
 
-add_library(hermes SHARED ${hermes_sources})
-add_library(hermes::hermes ALIAS hermes)
-
-#find_package(fmt REQUIRED)
-
-target_link_libraries(hermes fmt::fmt) # Buggy ?
-
-target_include_directories(hermes INTERFACE
-        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>
-        $<INSTALL_INTERFACE:include>)
-
-set_target_properties(hermes PROPERTIES
-        VERSION ${hermes_VERSION})
-
-
-include(GNUInstallDirs)
-#message(${CMAKE_INSTALL_LIBDIR})
-install(TARGETS hermes EXPORT fmt-targets
-        DESTINATION ${CMAKE_INSTALL_LIBDIR})
-
-install(FILES ${hermes_headers}
-        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/hermes)
-
+# Adding tests
+add_subdirectory(tests)

@@ -1,6 +1,6 @@
 #include <iostream>
 
-#include "hermes.h"
+#include "hermes/hermes.h"
 
 using namespace hermes;
 
