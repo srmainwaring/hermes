@@ -31,6 +31,10 @@ set(hermes_VERSION
 # Cmake scripts
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
+# Hermes options
+option(HERMES_BUILD_TESTS "Tests building." ON)
+
+
 # hermes depends on fmt library
 include(Add_fmt)
 
@@ -43,4 +47,6 @@ target_link_libraries(hermes fmt)
 
 
 # Adding tests
-add_subdirectory(tests)
+if (HERMES_BUILD_TESTS)
+    add_subdirectory(tests)
+endif()
