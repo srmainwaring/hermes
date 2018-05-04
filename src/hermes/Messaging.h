@@ -113,11 +113,20 @@ namespace hermes {
 
     public:
 
+        Message() = default;
+
         Message(std::string &&name, std::string &&description) : m_name(name), m_description(description) {}
 
+        void SetName(std::string name) { m_name = name; }
         std::string GetName() const { return m_name; }
 
+        void SetDescription(std::string description) { m_description = description; }
         std::string GetDescription() const { return m_description; }
+
+        void SetNameAndDescription(std::string name, std::string description) {
+            m_name = name;
+            m_description = description;
+        }
 
         template<class T>
         Field<T> *AddField(std::string name, std::string unit, std::string description, T *val) {
