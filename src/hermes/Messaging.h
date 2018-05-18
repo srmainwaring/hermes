@@ -198,6 +198,8 @@ namespace hermes {
 
         virtual void visit(const Field<double> *field) = 0;
 
+        virtual void visit(const Field<bool> *field) = 0;
+
         virtual void visit(const Field<std::string> *field) = 0;
 
         virtual void visit(const Field<Message> *field) = 0;
@@ -240,6 +242,8 @@ namespace hermes {
 
             void visit(const Field<double> *field) override { visit((FieldBase *) field); }
 
+            void visit(const Field<bool> *field) override  {visit((FieldBase *) field); }
+
             void visit(const Field<std::string> *field) override { visit((FieldBase *) field); }
 
             void visit(const Field<Message> *field) override {
@@ -268,6 +272,11 @@ namespace hermes {
             void visit(const Field<double> *field) override {  // TODO: parametrer les formats...
                 m_serializer->m_w.write("  * {:>10s} ({:^5s}) : {:.12g}\n",
                                         field->GetName(), field->GetUnit(), *field->GetData());
+            }
+
+            void visit(const Field<bool> *field) override {
+                m_serializer->m_w.write("  * {:>10s} : {:d}\n",
+                                        field->GetName(), *field->GetData());
             }
 
             void visit(const Field<std::string> *field) override {  // TODO: parametrer les formats...
@@ -339,6 +348,8 @@ namespace hermes {
 
             void visit(const Field<double> *field) override { visit((FieldBase *) field); }
 
+            void visit(const Field<bool> *field) override { visit((FieldBase *) field); }
+
             void visit(const Field<std::string> *field) override { visit((FieldBase *) field); }
 
             void visit(const Field<Message> *field) override {
@@ -362,6 +373,10 @@ namespace hermes {
 
             void visit(const Field<double> *field) override {
                 m_serializer->m_w.write("{:<20.12g}{:s}", *field->GetData(), m_serializer->m_delimiter);
+            }
+
+            void visit(const Field<bool> *field) override {
+                m_serializer->m_w.write("{:<10d}{:s}", *field->GetData(), m_serializer->m_delimiter);
             }
 
             void visit(const Field<std::string> *field) override {
