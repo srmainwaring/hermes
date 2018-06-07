@@ -16,7 +16,10 @@ if (NOT fmt_FOUND)
         # FMT BUILD OPTIONS
         set(CMAKE_INSTALL_PREFIX ${CMAKE_CURRENT_BINARY_DIR}/fmt)
         set(BUILD_SHARED_LIBS TRUE)
-        set(FMT_TEST OFF)
+        
+        set(FMT_TEST OFF CACHE BOOL "Generate the test target." FORCE)
+        set(FMT_DOC OFF CACHE BOOL "Generate the doc target." FORCE)
+        set(FMT_INSTALL OFF CACHE BOOL "Generate the install target." FORCE)
 
         add_subdirectory(${fmt_SOURCE_DIR} ${fmt_BINARY_DIR})
     endif()
