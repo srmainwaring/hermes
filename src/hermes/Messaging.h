@@ -74,10 +74,10 @@ namespace hermes {
 
     };
 
-/*
- * Abstract base class for the serialization of messages. It must use visitor pattern to serialize following its
- * different stages
- */
+    /*
+     * Abstract base class for the serialization of messages. It must use visitor pattern to serialize following its
+     * different stages
+     */
     class Serializer {
 
     public:
@@ -357,6 +357,31 @@ namespace hermes {
             }
         };
 
+        class UnitLineVisitor : public SerializationVisitor<CSVSerializer> {
+
+            inline void visit(FieldBase *field) {
+                m_serializer->m_w << field->GetUnit() << m_serializer->m_delimiter;
+            }
+
+        public:
+            explicit UnitLineVisitor(CSVSerializer *serializer) :
+                    SerializationVisitor<CSVSerializer>(serializer) {}
+
+            void visit(const Field<int> *field) override { visit((FieldBase *) field); }
+
+            void visit(const Field<float> *field) override { visit((FieldBase *) field); }
+
+            void visit(const Field<double> *field) override { visit((FieldBase *) field); }
+
+            void visit(const Field<bool> *field) override { visit((FieldBase *) field); }
+
+            void visit(const Field<std::string> *field) override { visit((FieldBase *) field); }
+
+            void visit(const Field<Message> *field) override {
+                field->GetData()->ApplyVisitor(*this);
+            }
+        };
+
         class SerializeVisitor : public SerializationVisitor<CSVSerializer> {
 
         public:
@@ -364,23 +389,23 @@ namespace hermes {
                     SerializationVisitor<CSVSerializer>(serializer) {}
 
             void visit(const Field<int> *field) override {
-                m_serializer->m_w.write("{:<10d}{:s}", *field->GetData(), m_serializer->m_delimiter);
+                m_serializer->m_w.write("{:d}{:s}", *field->GetData(), m_serializer->m_delimiter);
             }
 
             void visit(const Field<float> *field) override {
-                m_serializer->m_w.write("{:<20.12g}{:s}", *field->GetData(), m_serializer->m_delimiter);
+                m_serializer->m_w.write("{:.12g}{:s}", *field->GetData(), m_serializer->m_delimiter);
             }
 
             void visit(const Field<double> *field) override {
-                m_serializer->m_w.write("{:<20.12g}{:s}", *field->GetData(), m_serializer->m_delimiter);
+                m_serializer->m_w.write("{:.12g}{:s}", *field->GetData(), m_serializer->m_delimiter);
             }
 
             void visit(const Field<bool> *field) override {
-                m_serializer->m_w.write("{:<10d}{:s}", *field->GetData(), m_serializer->m_delimiter);
+                m_serializer->m_w.write("{:d}{:s}", *field->GetData(), m_serializer->m_delimiter);
             }
 
             void visit(const Field<std::string> *field) override {
-                m_serializer->m_w.write("{:<20s}{:s}", *field->GetData(), m_serializer->m_delimiter);
+                m_serializer->m_w.write("{:s}{:s}", *field->GetData(), m_serializer->m_delimiter);
             }
 
             void visit(const Field<Message> *field) override {
@@ -394,11 +419,9 @@ namespace hermes {
         }
 
         std::string GetCSVLine() {
-            // Post-processing the string to remove the trailing delimiter and adding a final line break
-            std::string str = m_w.str();
-            str.erase(str.size() - m_delimiter.size());
-            str += "\n";
-            return str;
+            // Adding the final line break
+            m_w << "\n";
+            return m_w.str();
         }
 
     public:
@@ -413,6 +436,11 @@ namespace hermes {
 
             InitVisitor visitor(this);
             msg->ApplyVisitor(visitor);
+            m_w << "\n";
+
+            UnitLineVisitor unitLineVisitor(this);
+            msg->ApplyVisitor(unitLineVisitor);
+
         }
 
         void Serialize(const Message *msg) override {
