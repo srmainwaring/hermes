@@ -11,6 +11,7 @@
 #include <iostream>
 #include <sstream>
 #include <fstream>
+#include <unordered_map>
 
 #include "fmt/format.h"
 
@@ -108,6 +109,9 @@ namespace hermes {
         typedef std::vector<std::unique_ptr<FieldBase>> VectorType;
         VectorType m_fields;
 
+        unsigned int c_nbFields = 0;
+        std::unordered_map<std::string, unsigned int> m_mapper;
+
         std::vector<std::unique_ptr<Serializer>> m_serializers;
 
 
@@ -131,6 +135,13 @@ namespace hermes {
         template<class T>
         Field<T> *AddField(std::string name, std::string unit, std::string description, T *val) {
             m_fields.emplace_back(std::make_unique<Field<T>>(name, unit, description, val));
+            m_mapper[name] = c_nbFields;
+            c_nbFields++;
+        }
+
+        template <class T>
+        Field<T>* GetField(std::string fieldName) {
+            return m_fields[m_mapper[fieldName]].get();
         }
 
         Serializer *AddSerializer(Serializer *serializer) {
@@ -156,7 +167,7 @@ namespace hermes {
             }
         }
 
-        void Serialize() const {
+        virtual void Serialize() const {
             for (const auto &serializer : m_serializers) {
                 serializer->Serialize(this);
             }
