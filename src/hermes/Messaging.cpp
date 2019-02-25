@@ -6,8 +6,8 @@
 
 namespace hermes {
 
-    CSVSerializer *Message::AddCSVSerializer() {
-        auto *csvSerializer = AddSerializer(new CSVSerializer());
+    CSVSerializer *Message::AddCSVSerializer(std::string CSVFile) {
+        auto *csvSerializer = AddSerializer(new CSVSerializer(CSVFile));
         return dynamic_cast<CSVSerializer *>(csvSerializer);
     }
 

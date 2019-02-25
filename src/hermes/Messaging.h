@@ -167,7 +167,7 @@ namespace hermes {
             return m_serializers[m_serializers.size() - 1].get();
         }
 
-        CSVSerializer *AddCSVSerializer();
+        CSVSerializer *AddCSVSerializer(std::string CSVFile);
 
         PrintSerializer *AddPrintSerializer();
 
@@ -465,7 +465,7 @@ namespace hermes {
         };
 
         void BuildFileName(const Message *msg) {
-            m_filename = fmt::format("{}.csv", msg->GetName());
+            m_CSVFile = fmt::format("{}.csv", msg->GetName());
         }
 
         std::string GetCSVLine() {
@@ -476,7 +476,7 @@ namespace hermes {
 
     public:
 
-        CSVSerializer() : m_serializeVisitor(this) {}
+        CSVSerializer(std::string CSVFile) : m_serializeVisitor(this), m_CSVFile(CSVFile) {}
 
         void SetDelimiter(const std::string &&delimiter) { m_delimiter = delimiter; }
 
@@ -502,9 +502,9 @@ namespace hermes {
         void Send(const Message *msg) override {
 
             if (c_IsInitialized) {
-                m_file.open(m_filename, std::ios::app);
+                m_file.open(m_CSVFile, std::ios::app);
             } else {
-                m_file.open(m_filename, std::ios::trunc);
+                m_file.open(m_CSVFile, std::ios::trunc);
                 c_IsInitialized = true;
             }
 
@@ -523,7 +523,7 @@ namespace hermes {
 
         SerializeVisitor m_serializeVisitor;
 
-        std::string m_filename;
+        std::string m_CSVFile;
         std::ofstream m_file;
 
         bool c_IsInitialized = false;
