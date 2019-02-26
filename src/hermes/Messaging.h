@@ -482,7 +482,7 @@ namespace hermes {
 
         void Initialize(const Message *msg) override {
             // Building the file name based on rule on message
-            BuildFileName(msg);
+//            BuildFileName(msg);
 
             InitVisitor visitor(this);
             msg->ApplyVisitor(visitor);
