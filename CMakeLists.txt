@@ -37,13 +37,14 @@ option(HERMES_BUILD_TESTS "Tests building." ON)
 
 # hermes depends on fmt library
 include(Add_fmt)
+include(Add_Eigen3)
 
 
 # Creating the library
 add_library(hermes SHARED "")
 add_subdirectory(src)
 
-target_link_libraries(hermes fmt)
+target_link_libraries(hermes fmt Eigen3::Eigen)
 
 
 # Adding tests

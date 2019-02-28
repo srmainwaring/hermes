@@ -15,6 +15,9 @@
 #include <functional>
 
 #include "fmt/format.h"
+#include "Eigen/Dense"
+
+
 
 namespace hermes {
 
