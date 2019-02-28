@@ -38,16 +38,15 @@ int main() {
     m2.AddField<double>("double2", "kk", "Second double", &d);
 
 
-    m.AddField<Message>("message", "", "Second message", &m2);
+//    m.AddField<Message>("message", "", "Second message", &m2);
 
     m.AddField<float>("float", "", "Un float", &f);
 
 
     // Adding two standard serializers
-    CSVSerializer* csvSerializer = m.AddCSVSerializer();
+    CSVSerializer* csvSerializer = m.AddCSVSerializer("");
     csvSerializer->SetDelimiter(" ; ");
 
-//    PrintSerializer* printSerializer = m.AddPrintSerializer();
 
     // Adding a vector
     std::vector<double> vector;
@@ -83,48 +82,6 @@ int main() {
         m.Serialize();
         m.Send();
     }
-
-
-
-
-
-
-
-
-
-//    Message m("my message", o);
-//
-//    m.AddField("Entier", "no unit", "Represente un entier", &o.i);
-//    m.AddField("double", "no unit", "Represente un double", &o.d);
-//    m.AddField("String", "no unit", "Represente une string", &o.str);
-//
-//    m.AddSerializer(std::make_shared<CSVSerializer>());
-//
-//
-//
-//    m.Initialize();
-//    m.Send();
-//
-//    for (uint i=0; i<3; ++i) {
-//        m.Serialize();
-//        m.Send();
-//    }
-//
-//
-//
-////    // Test visitor
-////    BuildString stringbuilder;
-////
-////    IntField field("essai", "m/s", "coucou", &o.i);
-////
-//////    field.ApplyVisitor(&stringbuilder);
-//
-//
-////    auto a = MyString();
-//
-//    Derived a;
-
-
 
 
 

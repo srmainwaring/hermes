@@ -2,6 +2,7 @@
 
 list(APPEND tests
         test_hermes
+        test_eigenVectorsSerialization
         )
 
 message(STATUS "Hermes tests...")

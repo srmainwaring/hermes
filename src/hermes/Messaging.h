@@ -233,9 +233,18 @@ namespace hermes {
 
         virtual void visit(const Field<std::string> *field) = 0;
 
+
+        virtual void visit(const Field<Eigen::Matrix<double, 3, 1>> *field) = 0;
+
+
+
+
 //        virtual void visit(const Field<Message> *field) = 0;
 
         virtual void visit(const Field<std::function<double ()>> *field) = 0;
+
+
+
 
 //    virtual void visit(const Field<std::vector<int>>* field) = 0;
 
@@ -279,6 +288,8 @@ namespace hermes {
 
             void visit(const Field<std::string> *field) override { visit((FieldBase *) field); }
 
+            void visit(const Field<Eigen::Matrix<double, 3, 1>> *field) override { visit((FieldBase *) field); }
+
 //            void visit(const Field<Message> *field) override {
 //                auto msg = field->GetData();
 //                m_serializer->m_w.write("\n[{}] : {}\n", msg.GetName(), msg.GetDescription());
@@ -320,6 +331,12 @@ namespace hermes {
             void visit(const Field<std::string> *field) override {  // TODO: parametrer les formats...
                 m_serializer->m_w.write("  * {:>10s} ({:^5s}) : {:s}\n",
                                         field->GetName(), field->GetUnit(), field->GetData());
+            }
+
+            void visit(const Field<Eigen::Matrix<double, 3, 1>> *field) override {
+                auto vector = field->GetData();
+                m_serializer->m_w.write("  * {:>10s} ({:^5s}) : {:.12g}\t{:.12g}\t{:.12g}\n",
+                                        field->GetName(), field->GetUnit(), vector[0], vector[1], vector[2]);
             }
 
 //            void visit(const Field<Message> *field) override {
@@ -395,6 +412,13 @@ namespace hermes {
 
             void visit(const Field<std::string> *field) override { visit((FieldBase *) field); }
 
+            void visit(const Field<Eigen::Matrix<double, 3, 1>> *field) override {
+                auto name = field->GetName();
+                m_serializer->m_w << name + "_0" << m_serializer->m_delimiter
+                                  << name + "_1" << m_serializer->m_delimiter
+                                  << name + "_2" << m_serializer->m_delimiter;
+            }
+
 //            void visit(const Field<Message> *field) override {
 //                field->GetData().ApplyVisitor(*this);
 //            }
@@ -423,6 +447,13 @@ namespace hermes {
             void visit(const Field<bool> *field) override { visit((FieldBase *) field); }
 
             void visit(const Field<std::string> *field) override { visit((FieldBase *) field); }
+
+            void visit(const Field<Eigen::Matrix<double, 3, 1>> *field) override {
+                auto unit = field->GetUnit();
+                m_serializer->m_w << unit << m_serializer->m_delimiter
+                                  << unit << m_serializer->m_delimiter
+                                  << unit << m_serializer->m_delimiter;
+            }
 
 //            void visit(const Field<Message> *field) override {
 //                field->GetData().ApplyVisitor(*this);
@@ -455,6 +486,15 @@ namespace hermes {
 
             void visit(const Field<std::string> *field) override {
                 m_serializer->m_w.write("{:s}{:s}", field->GetData(), m_serializer->m_delimiter);
+            }
+
+            void visit(const Field<Eigen::Matrix<double, 3, 1>> *field) override {
+                auto vector = field->GetData();
+                m_serializer->m_w.write("{:.12g}{:s}{:.12g}{:s}{:.12g}{:s}",
+                        vector[0], m_serializer->m_delimiter,
+                        vector[1], m_serializer->m_delimiter,
+                        vector[2], m_serializer->m_delimiter
+                        );
             }
 
 //            void visit(const Field<Message> *field) override {
