@@ -95,7 +95,8 @@ namespace hermes {
     class Serializer {
 
     public:
-
+        virtual ~Serializer() {}
+        
         virtual void Initialize(const Message *msg) = 0;
 
         virtual void Serialize(const Message *msg) = 0;
