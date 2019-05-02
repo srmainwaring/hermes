@@ -24,10 +24,12 @@ if (NOT TARGET Eigen3::Eigen)  # if we haven't found the target yet
 
           # To make the Eigen3::Eigen target readily available at first Add
           get_target_property(INC eigen INTERFACE_INCLUDE_DIRECTORIES)
-          set_target_properties(Eigen3::Eigen
-            PROPERTIES
-              INTERFACE_INCLUDE_DIRECTORIES "${INC}"
-          )
+          if (TARGET Eigen3::Eigen)
+            set_target_properties(Eigen3::Eigen
+              PROPERTIES
+                INTERFACE_INCLUDE_DIRECTORIES "${INC}"
+            )
+          endif()
           add_library(Eigen3::Eigen ALIAS eigen)
       else()
           message(STATUS "Eigen3 already populated")
