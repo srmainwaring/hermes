@@ -147,14 +147,14 @@ namespace hermes {
         }
 
         template<class T>
-        Field<T> *AddField(std::string name, std::string unit, std::string description, T *val) { // FIXME : pourquoi on renvoit le pointeur vers le champ ?
+        void AddField(std::string name, std::string unit, std::string description, T *val) { // FIXME : pourquoi on renvoit le pointeur vers le champ ?
             m_fields.emplace_back(std::make_unique<Field<T>>(name, unit, description, val));
             m_mapper[name] = c_nbFields;
             c_nbFields++;
         }
 
         template <typename T>
-        Field<T> *AddField(std::string name, std::string unit, std::string description, std::function<T()> func) {
+        void AddField(std::string name, std::string unit, std::string description, std::function<T()> func) {
             m_fields.emplace_back(std::make_unique<Field<T>>(name, unit, description, func));
             m_mapper[name] = c_nbFields;
             c_nbFields++;
