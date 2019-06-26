@@ -40,6 +40,9 @@ include(Add_fmt)
 include(Add_Eigen3)
 
 
+# For Windows (exposing public API)
+set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
+
 # Creating the library
 add_library(hermes SHARED "")
 add_subdirectory(src)
