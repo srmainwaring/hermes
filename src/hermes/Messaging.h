@@ -505,9 +505,9 @@ namespace hermes {
 
     };
 
-    void BuildFileName(const Message *msg) {
-      m_CSVFile = fmt::format("{}.csv", msg->GetName());
-    }
+//    void BuildFileName(const Message *msg) {
+//      m_CSVFile = fmt::format("{}.csv", msg->GetName());
+//    }
 
     std::string GetCSVLine() {
       // Adding the final line break
@@ -517,7 +517,7 @@ namespace hermes {
 
    public:
 
-    CSVSerializer(std::string CSVFile) : m_serializeVisitor(this), m_CSVFile(CSVFile) {}
+    explicit CSVSerializer(std::string CSVFile) : m_serializeVisitor(this), m_CSVFile(CSVFile) {}
 
     void SetDelimiter(const std::string &delimiter) { m_delimiter = delimiter; }
 
