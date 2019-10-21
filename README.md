@@ -1,6 +1,6 @@
 # Hermes
 
-TODO : description
+Hermes : Heterogeneous Messaging C++ library.
 
 ## Compilation
 
