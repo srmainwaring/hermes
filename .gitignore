@@ -3,7 +3,7 @@
 .idea
 cmake-build-debug
 main_alternative.cpp
-build
+build*/
 
 CMakeFiles
 *.pyc

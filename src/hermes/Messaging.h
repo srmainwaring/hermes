@@ -96,7 +96,7 @@ namespace hermes {
 
     public:
         virtual ~Serializer() {}
-        
+
         virtual void Initialize(const Message *msg) = 0;
 
         virtual void Serialize(const Message *msg) = 0;
@@ -133,7 +133,7 @@ namespace hermes {
 
         Message() = default;
 
-        Message(std::string &&name, std::string &&description) : m_name(name), m_description(description) {}
+        Message(const std::string &name, const std::string &description) : m_name(name), m_description(description) {}
 
         void SetName(std::string name) { m_name = name; }
         std::string GetName() const { return m_name; }
