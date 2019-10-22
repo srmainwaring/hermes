@@ -25,7 +25,6 @@ if (NOT fmt_FOUND)
 
         # FMT BUILD OPTIONS
         set(CMAKE_INSTALL_PREFIX ${CMAKE_CURRENT_BINARY_DIR}/fmt)
-        set(BUILD_SHARED_LIBS TRUE)
         
         set(FMT_TEST OFF CACHE BOOL "Generate the test target." FORCE)
         set(FMT_DOC OFF CACHE BOOL "Generate the doc target." FORCE)
