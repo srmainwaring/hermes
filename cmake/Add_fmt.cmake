@@ -5,7 +5,7 @@ if (NOT fmt_FOUND)
     set(fmt_URL https://github.com/fmtlib/fmt.git)
     FetchContent_Declare(fmt
             GIT_REPOSITORY ${fmt_URL}
-            GIT_TAG 4.1.0
+            GIT_TAG 6.1.2
             )
 
     FetchContent_GetProperties(fmt)
