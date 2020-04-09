@@ -236,6 +236,8 @@ namespace hermes {
 
     virtual void visit(const Field<Eigen::Matrix<double, 3, 1>> *field) = 0;
 
+    virtual void visit(const Field<std::vector<double>> *field) = 0;
+
     virtual void visit(const Field<std::function<double()>> *field) = 0;
 
   };
@@ -280,6 +282,8 @@ namespace hermes {
 
       void visit(const Field<Eigen::Matrix<double, 3, 1>> *field) override { visit((FieldBase *) field); }
 
+      void visit(const Field<std::vector<double>> *field) override { visit((FieldBase *) field); }
+
       void visit(const Field<std::function<double()>> *field) override { visit((FieldBase *) field); }
 
     };
@@ -320,6 +324,16 @@ namespace hermes {
         fmt::format_to(m_serializer->m_buffer, "  * {:>10s} ({:^5s}) : {:.12g}\t{:.12g}\t{:.12g}\n",
                        field->GetName(), field->GetUnit(), vector[0], vector[1], vector[2]);
 
+      }
+
+      void visit(const Field<std::vector<double>> *field) override {
+        auto vector = field->GetData();
+        fmt::format_to(m_serializer->m_buffer, "  * {:>10s} ({:^5s}) : ",
+                       field->GetName(), field->GetUnit());
+        for (const auto &element : vector) {
+          fmt::format_to(m_serializer->m_buffer, "{}{:.12g}\t", m_serializer->m_buffer.data(), element);
+        }
+        fmt::format_to(m_serializer->m_buffer, "{}\n", m_serializer->m_buffer.data());
       }
 
 //            void visit(const Field<Message> *field) override {
@@ -403,6 +417,14 @@ namespace hermes {
                        name + "_2" + m_serializer->m_delimiter); // FIXME : permettre de fixer des regles d'indicage...
       }
 
+      void visit(const Field<std::vector<double>> *field) override {
+        auto n = field->GetData().size();
+        auto name = field->GetName();
+        for (int i=0; i<n; i++) {
+          fmt::format_to(m_serializer->m_buffer, "{}_{}{}", name, i, m_serializer->m_delimiter);
+        }
+      }
+
 //            void visit(const Field<Message> *field) override {
 //                field->GetData().ApplyVisitor(*this);
 //            }
@@ -437,6 +459,13 @@ namespace hermes {
         fmt::format_to(m_serializer->m_buffer, "{}{}{}", unit_, unit_, unit_);
       }
 
+      void visit(const Field<std::vector<double>> *field) override {
+        auto n = field->GetData().size();
+        auto unit_ = field->GetUnit();
+        for (int i=0; i<n; i++) {
+          fmt::format_to(m_serializer->m_buffer, "{}{}", unit_, m_serializer->m_delimiter);
+        }
+      }
 //            void visit(const Field<Message> *field) override {
 //                field->GetData().ApplyVisitor(*this);
 //            }
@@ -477,6 +506,13 @@ namespace hermes {
                        vector[1], m_serializer->m_delimiter,
                        vector[2], m_serializer->m_delimiter
         );
+      }
+
+      void visit(const Field<std::vector<double>> *field) override {
+        auto vector = field->GetData();
+        for (const auto& element: vector) {
+          fmt::format_to(m_serializer->m_buffer, "{:.12g}{}", element, m_serializer->m_delimiter);
+        }
       }
 
 //            void visit(const Field<Message> *field) override {
