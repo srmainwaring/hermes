@@ -1,12 +1,25 @@
+
+set(FMT_TAG 7.1.2)
+
 find_package(fmt QUIET)
 if (NOT fmt_FOUND)
     include(FetchContent)
 
     set(fmt_URL https://github.com/fmtlib/fmt.git)
+    IF(MINGW OR MSVC)
+        #add_definitions(-DFMT_DLL)
+        message(STATUS "FetchContent_Declare 'Fmt' dependency for MS Windows")
     FetchContent_Declare(fmt
             GIT_REPOSITORY ${fmt_URL}
-            GIT_TAG 7.1.2
+            GIT_TAG ${FMT_TAG}
+            PATCH_COMMAND git apply "${CMAKE_CURRENT_SOURCE_DIR}/cmake/patches/fmt-windows.patch"
             )
+    ELSE(MINGW OR MSVC)
+        FetchContent_Declare(fmt
+            GIT_REPOSITORY ${fmt_URL}
+            GIT_TAG ${FMT_TAG}
+            )
+    ENDIF(MINGW OR MSVC)
 
     FetchContent_GetProperties(fmt)
     if(NOT fmt_POPULATED)

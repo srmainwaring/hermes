@@ -33,6 +33,7 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 # Hermes options
 option(HERMES_BUILD_TESTS "Tests building." ON)
+option(BUILD_SHARED_LIBS "" ON)
 
 
 # hermes depends on fmt library
@@ -44,7 +45,7 @@ include(Add_Eigen3)
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 
 # Creating the library
-add_library(hermes SHARED "")
+add_library(hermes)
 add_subdirectory(src)
 
 target_link_libraries(hermes fmt Eigen3::Eigen)

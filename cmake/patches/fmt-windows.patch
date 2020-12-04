@@ -1,0 +1,22 @@
+diff --git a/fmt/format.h b/fmt/format.h
+index 561a9e07..5be06170 100644
+--- a/fmt/format.h
++++ b/fmt/format.h
+@@ -83,13 +83,16 @@ typedef __int64          intmax_t;
+ #include <stdint.h>
+ #endif
+ 
+-#if !defined(FMT_HEADER_ONLY) && defined(_WIN32)
++#if defined(__MINGW32__) || defined(__MINGW64__)
++# define FMT_API
++#elif !defined(FMT_HEADER_ONLY) && defined(_WIN32)
+ # ifdef FMT_EXPORT
+ #  define FMT_API __declspec(dllexport)
+ # elif defined(FMT_SHARED)
+ #  define FMT_API __declspec(dllimport)
+ # endif
+ #endif
++
+ #ifndef FMT_API
+ # define FMT_API
+ #endif
