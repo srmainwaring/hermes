@@ -14,7 +14,9 @@
 #include <unordered_map>
 #include <functional>
 
-#include "fmt/format.h"
+#include <fmt/format.h>
+#include <fmt/ostream.h>
+
 #include "Eigen/Dense"
 
 
@@ -84,10 +86,6 @@ namespace hermes {
     };
 
 
-
-
-
-
     /*
      * Abstract base class for the serialization of messages. It must use visitor pattern to serialize following its
      * different stages
@@ -96,7 +94,7 @@ namespace hermes {
 
     public:
         virtual ~Serializer() {}
-
+        
         virtual void Initialize(const Message *msg) = 0;
 
         virtual void Serialize(const Message *msg) = 0;
@@ -133,12 +131,14 @@ namespace hermes {
 
         Message() = default;
 
-        Message(const std::string &name, const std::string &description) : m_name(name), m_description(description) {}
+    Message(const std::string &name, const std::string &description) : m_name(name), m_description(description) {}
 
         void SetName(std::string name) { m_name = name; }
+
         std::string GetName() const { return m_name; }
 
         void SetDescription(std::string description) { m_description = description; }
+
         std::string GetDescription() const { return m_description; }
 
         void SetNameAndDescription(std::string name, std::string description) {
@@ -147,7 +147,8 @@ namespace hermes {
         }
 
         template<class T>
-        void AddField(std::string name, std::string unit, std::string description, T *val) { // FIXME : pourquoi on renvoit le pointeur vers le champ ?
+    void AddField(std::string name, std::string unit, std::string description,
+                  T *val) { // FIXME : pourquoi on renvoit le pointeur vers le champ ?
             m_fields.emplace_back(std::make_unique<Field<T>>(name, unit, description, val));
             m_mapper[name] = c_nbFields;
             c_nbFields++;
@@ -234,20 +235,11 @@ namespace hermes {
 
         virtual void visit(const Field<std::string> *field) = 0;
 
-
         virtual void visit(const Field<Eigen::Matrix<double, 3, 1>> *field) = 0;
 
-
-
-
-//        virtual void visit(const Field<Message> *field) = 0;
+    virtual void visit(const Field<std::vector<double>> *field) = 0;
 
         virtual void visit(const Field<std::function<double ()>> *field) = 0;
-
-
-
-
-//    virtual void visit(const Field<std::vector<int>>* field) = 0;
 
     };
 
@@ -271,7 +263,7 @@ namespace hermes {
         class InitVisitor : public SerializationVisitor<PrintSerializer> {
 
             inline void visit(FieldBase *field) {
-                m_serializer->m_w.write("  * {:>10s} ({:^5s}) : {:50s}\n",
+        fmt::format_to(m_serializer->m_buffer, "  * {:>10s} ({:^5s}) : {:50s}\n",
                                         field->GetName(), field->GetUnit(), field->GetDescription());
             }
 
@@ -291,15 +283,9 @@ namespace hermes {
 
             void visit(const Field<Eigen::Matrix<double, 3, 1>> *field) override { visit((FieldBase *) field); }
 
-//            void visit(const Field<Message> *field) override {
-//                auto msg = field->GetData();
-//                m_serializer->m_w.write("\n[{}] : {}\n", msg.GetName(), msg.GetDescription());
-//                msg.ApplyVisitor(*this);
-//            }
+      void visit(const Field<std::vector<double>> *field) override { visit((FieldBase *) field); }
 
             void visit(const Field<std::function<double ()>> *field) override { visit((FieldBase *) field); }
-
-
 
         };
 
@@ -310,34 +296,45 @@ namespace hermes {
                     SerializationVisitor<PrintSerializer>(serializer) {}
 
             void visit(const Field<int> *field) override {  // TODO: parametrer les formats...
-                m_serializer->m_w.write("  * {:>10s} ({:^5s}) : {:d}\n",
+        fmt::format_to(m_serializer->m_buffer, "  * {:>10s} ({:^5s}) : {:d}\n",
                                         field->GetName(), field->GetUnit(), field->GetData());
             }
 
             void visit(const Field<float> *field) override {  // TODO: parametrer les formats...
-                m_serializer->m_w.write("  * {:>10s} ({:^5s}) : {:.12g}\n",
+        fmt::format_to(m_serializer->m_buffer, "  * {:>10s} ({:^5s}) : {:.12g}\n",
                                         field->GetName(), field->GetUnit(), field->GetData());
             }
 
             void visit(const Field<double> *field) override {  // TODO: parametrer les formats...
-                m_serializer->m_w.write("  * {:>10s} ({:^5s}) : {:.12g}\n",
+        fmt::format_to(m_serializer->m_buffer, "  * {:>10s} ({:^5s}) : {:.12g}\n",
                                         field->GetName(), field->GetUnit(), field->GetData());
             }
 
             void visit(const Field<bool> *field) override {
-                m_serializer->m_w.write("  * {:>10s} : {:d}\n",
+        fmt::format_to(m_serializer->m_buffer, "  * {:>10s} : {:d}\n",
                                         field->GetName(), field->GetData());
             }
 
             void visit(const Field<std::string> *field) override {  // TODO: parametrer les formats...
-                m_serializer->m_w.write("  * {:>10s} ({:^5s}) : {:s}\n",
+        fmt::format_to(m_serializer->m_buffer, "  * {:>10s} ({:^5s}) : {:s}\n",
                                         field->GetName(), field->GetUnit(), field->GetData());
             }
 
             void visit(const Field<Eigen::Matrix<double, 3, 1>> *field) override {
                 auto vector = field->GetData();
-                m_serializer->m_w.write("  * {:>10s} ({:^5s}) : {:.12g}\t{:.12g}\t{:.12g}\n",
+        fmt::format_to(m_serializer->m_buffer, "  * {:>10s} ({:^5s}) : {:.12g}\t{:.12g}\t{:.12g}\n",
                                         field->GetName(), field->GetUnit(), vector[0], vector[1], vector[2]);
+
+      }
+
+      void visit(const Field<std::vector<double>> *field) override {
+        auto vector = field->GetData();
+        fmt::format_to(m_serializer->m_buffer, "  * {:>10s} ({:^5s}) : ",
+                       field->GetName(), field->GetUnit());
+        for (const auto &element : vector) {
+          fmt::format_to(m_serializer->m_buffer, "{}{:.12g}\t", m_serializer->m_buffer.data(), element);
+        }
+        fmt::format_to(m_serializer->m_buffer, "{}\n", m_serializer->m_buffer.data());
             }
 
 //            void visit(const Field<Message> *field) override {
@@ -346,14 +343,14 @@ namespace hermes {
 //            }
 
             void visit(const Field<std::function<double (void)>> *field) override {
-                m_serializer->m_w.write("  * {:>10s} ({:^5s}) : {:.12g}\n",
+        fmt::format_to(m_serializer->m_buffer, "  * {:>10s} ({:^5s}) : {:.12g}\n",
                                         field->GetName(), field->GetUnit(), (field->GetData())());
             }
 
         };
 
         void WriteHeader(const Message *msg) {
-            m_w.write("\n[{}] : {}\n", msg->GetName(), msg->GetDescription());
+      fmt::format_to(m_buffer, "\n[{}] : {}\n", msg->GetName(), msg->GetDescription());
         }
 
     public:
@@ -378,12 +375,12 @@ namespace hermes {
         }
 
         void Send(const Message *msg) override {
-            std::cout << m_w.c_str();
-            m_w.clear();
+      std::cout << fmt::to_string(m_buffer);
+      m_buffer.clear();
         }
 
     private:
-        fmt::MemoryWriter m_w;
+    fmt::memory_buffer m_buffer;
         SerializeVisitor m_serializeVisitor;
 
     };
@@ -396,7 +393,7 @@ namespace hermes {
         class InitVisitor : public SerializationVisitor<CSVSerializer> {
 
             inline void visit(FieldBase *field) {
-                m_serializer->m_w << field->GetName() << m_serializer->m_delimiter;
+        fmt::format_to(m_serializer->m_buffer, "{}{}", field->GetName(), m_serializer->m_delimiter);
             }
 
         public:
@@ -415,9 +412,18 @@ namespace hermes {
 
             void visit(const Field<Eigen::Matrix<double, 3, 1>> *field) override {
                 auto name = field->GetName();
-                m_serializer->m_w << name + "_0" << m_serializer->m_delimiter
-                                  << name + "_1" << m_serializer->m_delimiter
-                                  << name + "_2" << m_serializer->m_delimiter;
+        fmt::format_to(m_serializer->m_buffer, "{}{}{}",
+                       name + "_0" + m_serializer->m_delimiter,
+                       name + "_1" + m_serializer->m_delimiter,
+                       name + "_2" + m_serializer->m_delimiter); // FIXME : permettre de fixer des regles d'indicage...
+      }
+
+      void visit(const Field<std::vector<double>> *field) override {
+        auto n = field->GetData().size();
+        auto name = field->GetName();
+        for (int i=0; i<n; i++) {
+          fmt::format_to(m_serializer->m_buffer, "{}_{}{}", name, i, m_serializer->m_delimiter);
+        }
             }
 
 //            void visit(const Field<Message> *field) override {
@@ -432,7 +438,7 @@ namespace hermes {
         class UnitLineVisitor : public SerializationVisitor<CSVSerializer> {
 
             inline void visit(FieldBase *field) {
-                m_serializer->m_w << field->GetUnit() << m_serializer->m_delimiter;
+        fmt::format_to(m_serializer->m_buffer, "{}{}", field->GetUnit(), m_serializer->m_delimiter);
             }
 
         public:
@@ -450,12 +456,17 @@ namespace hermes {
             void visit(const Field<std::string> *field) override { visit((FieldBase *) field); }
 
             void visit(const Field<Eigen::Matrix<double, 3, 1>> *field) override {
-                auto unit = field->GetUnit();
-                m_serializer->m_w << unit << m_serializer->m_delimiter
-                                  << unit << m_serializer->m_delimiter
-                                  << unit << m_serializer->m_delimiter;
+        std::string unit_ = field->GetUnit() + m_serializer->m_delimiter;
+        fmt::format_to(m_serializer->m_buffer, "{}{}{}", unit_, unit_, unit_);
             }
 
+      void visit(const Field<std::vector<double>> *field) override {
+        auto n = field->GetData().size();
+        auto unit_ = field->GetUnit();
+        for (int i=0; i<n; i++) {
+          fmt::format_to(m_serializer->m_buffer, "{}{}", unit_, m_serializer->m_delimiter);
+        }
+      }
 //            void visit(const Field<Message> *field) override {
 //                field->GetData().ApplyVisitor(*this);
 //            }
@@ -470,32 +481,39 @@ namespace hermes {
                     SerializationVisitor<CSVSerializer>(serializer) {}
 
             void visit(const Field<int> *field) override {
-                m_serializer->m_w.write("{:d}{:s}", field->GetData(), m_serializer->m_delimiter);
+        fmt::format_to(m_serializer->m_buffer, "{:d}{:s}", field->GetData(), m_serializer->m_delimiter);
             }
 
             void visit(const Field<float> *field) override {
-                m_serializer->m_w.write("{:.12g}{:s}", field->GetData(), m_serializer->m_delimiter);
+        fmt::format_to(m_serializer->m_buffer, "{:.12g}{:s}", field->GetData(), m_serializer->m_delimiter);
             }
 
             void visit(const Field<double> *field) override {
-                m_serializer->m_w.write("{:.12g}{:s}", field->GetData(), m_serializer->m_delimiter);
+        fmt::format_to(m_serializer->m_buffer, "{:.12g}{:s}", field->GetData(), m_serializer->m_delimiter);
             }
 
             void visit(const Field<bool> *field) override {
-                m_serializer->m_w.write("{:d}{:s}", field->GetData(), m_serializer->m_delimiter);
+        fmt::format_to(m_serializer->m_buffer, "{:d}{:s}", field->GetData(), m_serializer->m_delimiter);
             }
 
             void visit(const Field<std::string> *field) override {
-                m_serializer->m_w.write("{:s}{:s}", field->GetData(), m_serializer->m_delimiter);
+        fmt::format_to(m_serializer->m_buffer, "{:s}{:s}", field->GetData(), m_serializer->m_delimiter);
             }
 
             void visit(const Field<Eigen::Matrix<double, 3, 1>> *field) override {
                 auto vector = field->GetData();
-                m_serializer->m_w.write("{:.12g}{:s}{:.12g}{:s}{:.12g}{:s}",
+        fmt::format_to(m_serializer->m_buffer, "{:.12g}{:s}{:.12g}{:s}{:.12g}{:s}",
                         vector[0], m_serializer->m_delimiter,
                         vector[1], m_serializer->m_delimiter,
                         vector[2], m_serializer->m_delimiter
                         );
+      }
+
+      void visit(const Field<std::vector<double>> *field) override {
+        auto vector = field->GetData();
+        for (const auto& element: vector) {
+          fmt::format_to(m_serializer->m_buffer, "{:.12g}{}", element, m_serializer->m_delimiter);
+        }
             }
 
 //            void visit(const Field<Message> *field) override {
@@ -503,26 +521,26 @@ namespace hermes {
 //            }
 
             void visit(const Field<std::function<double ()>> *field) {
-                m_serializer->m_w.write("{:.12g}{:s}", (field->GetData())(), m_serializer->m_delimiter);
+        fmt::format_to(m_serializer->m_buffer, "{:.12g}{:s}", (field->GetData())(), m_serializer->m_delimiter);
             }
 
         };
 
-        void BuildFileName(const Message *msg) {
-            m_CSVFile = fmt::format("{}.csv", msg->GetName());
-        }
+//    void BuildFileName(const Message *msg) {
+//      m_CSVFile = fmt::format("{}.csv", msg->GetName());
+//    }
 
         std::string GetCSVLine() {
             // Adding the final line break
-            m_w << "\n";
-            return m_w.str();
+      fmt::format_to(m_buffer, "\n");
+      return fmt::to_string(m_buffer);
         }
 
     public:
 
-        CSVSerializer(std::string CSVFile) : m_serializeVisitor(this), m_CSVFile(CSVFile) {}
+    explicit CSVSerializer(std::string CSVFile) : m_serializeVisitor(this), m_CSVFile(CSVFile) {}
 
-        void SetDelimiter(const std::string &&delimiter) { m_delimiter = delimiter; }
+    void SetDelimiter(const std::string &delimiter) { m_delimiter = delimiter; }
 
         void Initialize(const Message *msg) override {
             // Building the file name based on rule on message
@@ -530,7 +548,7 @@ namespace hermes {
 
             InitVisitor visitor(this);
             msg->ApplyVisitor(visitor);
-            m_w << "\n";
+      fmt::format_to(m_buffer, "\n");
 
             UnitLineVisitor unitLineVisitor(this);
             msg->ApplyVisitor(unitLineVisitor);
@@ -556,14 +574,14 @@ namespace hermes {
 
             m_file.close();
 
-            m_w.clear();
+      m_buffer.clear();
         }
 
     private:
 
         std::string m_delimiter = ";";
 
-        fmt::MemoryWriter m_w;
+    fmt::memory_buffer m_buffer;
 
         SerializeVisitor m_serializeVisitor;
 
