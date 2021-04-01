@@ -37,6 +37,7 @@ option(BUILD_SHARED_LIBS "" ON)
 
 
 # hermes depends on fmt library
+include(URL.conf)
 include(Add_fmt)
 include(Add_Eigen3)
 
