@@ -1,6 +1,7 @@
 
 
 list(APPEND tests
+        test_get_version
         test_hermes
         test_eigenVectorsSerialization
         test_serializerDestructor

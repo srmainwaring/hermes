@@ -1,6 +1,7 @@
 #include <iostream>
 
 #include "hermes/hermes.h"
+#include "hermes/version.h"
 
 using namespace hermes;
 
