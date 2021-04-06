@@ -31,6 +31,21 @@ set(hermes_VERSION
 # Cmake scripts
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
+#=============================================================================
+# Retrieving the current Git revision
+#=============================================================================
+set(PRE_CONFIGURE_FILE ${CMAKE_CURRENT_SOURCE_DIR}/src/hermes/version.h.in CACHE FILEPATH "" FORCE)
+set(POST_CONFIGURE_FILE ${CMAKE_CURRENT_BINARY_DIR}/src/hermes/version.h CACHE FILEPATH "" FORCE)
+set(GIT_WORKING_DIR ${CMAKE_CURRENT_SOURCE_DIR} CACHE FILEPATH "" FORCE)
+set(GIT_STATE_FILE ${CMAKE_CURRENT_BINARY_DIR}/git-state-hash CACHE FILEPATH "" FORCE)
+include(cmake/git_watcher.cmake)
+
+if (NOT EXISTS ${POST_CONFIGURE_FILE})
+    configure_file(${PRE_CONFIGURE_FILE} ${POST_CONFIGURE_FILE})
+endif()
+
+
+
 # Hermes options
 option(HERMES_BUILD_TESTS "Tests building." ON)
 option(BUILD_SHARED_LIBS "" ON)
@@ -47,6 +62,8 @@ set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 
 # Creating the library
 add_library(hermes)
+add_dependencies(hermes check_git_hermes) # For git_watcher to fetch git informations before effective build
+
 add_subdirectory(src)
 
 target_link_libraries(hermes fmt Eigen3::Eigen)

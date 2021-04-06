@@ -5,3 +5,4 @@ target_sources(hermes
 )
 
 target_include_directories(hermes INTERFACE ${CMAKE_CURRENT_LIST_DIR})
+target_include_directories(hermes INTERFACE ${CMAKE_CURRENT_BINARY_DIR})
