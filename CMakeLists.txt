@@ -53,8 +53,10 @@ option(BUILD_SHARED_LIBS "" ON)
 
 # hermes depends on fmt library
 include(cmake/URL.conf.cmake)
-include(Add_fmt)
-include(Add_Eigen3)
+include(cmake/Add_fmt.cmake)
+include(cmake/Add_Eigen3.cmake)
+include(cmake/Add_HDF5.cmake)
+include(cmake/Add_HighFive.cmake)
 
 
 # For Windows (exposing public API)
