@@ -1,6 +1,13 @@
+// ==========================================================================
+// hermes
 //
-// Created by frongere on 03/04/18.
+// Copyright (c) D-ICE Engineering.
+// All rights reserved.
 //
+// Use of this source code is governed by a GPLv3 license that can be found
+// in the LICENSE file of FRyDoM.
+//
+// ==========================================================================
 
 #include "Messaging.h"
 
