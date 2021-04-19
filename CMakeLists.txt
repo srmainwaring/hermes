@@ -46,6 +46,8 @@ endif ()
 
 
 # Hermes options
+cmake_policy(SET CMP0077 NEW)
+
 option(HERMES_USE_HDF5 "Activate HDF5 as serialization tool" OFF)
 option(HERMES_BUILD_TESTS "Tests building." ON)
 option(BUILD_SHARED_LIBS "" ON)
