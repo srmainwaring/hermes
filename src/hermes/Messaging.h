@@ -602,12 +602,12 @@ namespace hermes {
 
 
 
-  CSVSerializer *Message::AddCSVSerializer(std::string CSVFile) {
+  inline CSVSerializer *Message::AddCSVSerializer(std::string CSVFile) {
     auto *csvSerializer = AddSerializer(new CSVSerializer(CSVFile));
     return dynamic_cast<CSVSerializer *>(csvSerializer);
   }
 
-  PrintSerializer *Message::AddPrintSerializer() {
+  inline PrintSerializer *Message::AddPrintSerializer() {
     auto *printSerializer = AddSerializer(new PrintSerializer());
     return dynamic_cast<PrintSerializer *>(printSerializer);
   }
