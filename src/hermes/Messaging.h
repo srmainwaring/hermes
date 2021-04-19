@@ -228,6 +228,9 @@ namespace hermes {
 
   };
 
+
+
+
   struct Visitor {
 
     virtual void visit(const Field<int> *field) = 0;
@@ -596,6 +599,19 @@ namespace hermes {
     bool c_IsInitialized = false;
 
   };
+
+
+
+  CSVSerializer *Message::AddCSVSerializer(std::string CSVFile) {
+    auto *csvSerializer = AddSerializer(new CSVSerializer(CSVFile));
+    return dynamic_cast<CSVSerializer *>(csvSerializer);
+  }
+
+  PrintSerializer *Message::AddPrintSerializer() {
+    auto *printSerializer = AddSerializer(new PrintSerializer());
+    return dynamic_cast<PrintSerializer *>(printSerializer);
+  }
+
 
 }  // end namespace hermes
 
