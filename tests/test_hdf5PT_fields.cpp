@@ -6,6 +6,7 @@
  * Sources:
  *
  * http://santoshdarekar-hdf5.blogspot.com/2011/02/compound-data-in-packet-table.html
+ * https://forum.hdfgroup.org/t/avoiding-a-corrupted-hdf5-file-or-be-able-to-recover-it/5441/2
  *
  */
 
@@ -17,6 +18,52 @@
 
 #include "diemer/Timer.h"
 
+/*
+ * On fait le choix de ne pas reposer (le moins possible) sur des interfaces high-level
+ * Ceci a but de performances
+ * On utilise donc uniquement l'API C pure de HDF5, pas ses wrappers C++
+ *
+ */
+
+
+
+/*
+ * TODO: on voudrait s'affanchir de la definition de structures pour declarer des records des tables
+ * En effet, on aimerait pouvoir juste declarer des arrays de bytes comme record, ie, une suite dans padding de
+ * fields. C'est plus raccord avec la maniere de fonctionner d'hermes.
+ *
+ * Dans les exemples fournis par HDF5, il est toujours utilise une structure pour specifier en memoire un type
+ * COMPOUND. Pour creer le type HDF5_COMPOUND et specifier sa taille, il est recommande d'utiliser sizeof sur la
+ * structure afin d'avoir une determination de la taille de la struct portable. En effet, suivant l'architecture,
+ * le compilateur etc... on peut avoir des tailles en memoire de structures differentes (padding). Ensuite, pour
+ * specifier les champs du COMPOUND, on utilise la macro HOFFSET(s, f) (qui est en fait offsetof(s, f)) qui permet
+ * d'obtenir l'offset de chaque champ de la structure de maniere exacte de maniere portable car cela prnd en compte
+ * le padding utilise par l'architecture et le compilateur.
+ *
+ * Le probleme ici avec hermes est qu'on voudrait eviter de specifier une structure pour chaque message car ca revient
+ * a changer substantiellement le fonctionnement d'hermes et aurait une emprunte non nulle a un datalog en HDF5.
+ * L'objectif est donc d'etre capables de construire des bytes arrays, sans padding qui soient compris par le COMPOUND.
+ * On veut reposer sur les tailles des types NATIVE de hdf5 qui assurent la portabilite et le abouter dans un tableau
+ * de bytes a utiliser en lieu et place d'une structure C. Les verrous pour y arriver sont:
+ *
+ * 1 - on doit etre capables d'abouter des champs de message hermes sous forme de tableaux de bytes
+ * 2 - le COMPOUND datatype HDF5 est defini a l'aide d'offsets qui correspondent et bases sur les types natifs portables
+ * 3 - on a suffisamment d'introspection dans les fichiers HDF5 pour etre capables de lire les records sans connaitres
+ * leur layout memoire sur le disque
+ * 4 - il faut que les IO soient rapides
+ *
+ * Autre aspect crucial est d'etre tolerant quant aux arrets brutaux de programmes (crash ou arret de type CTRL-C)
+ * Dans ce type de cas, si on a un arret au moment d'un write HDF5, il est possible de se retrouver avec un fichier
+ * HDF5 corrompu qu'il ne sera pas possible de lire. C'est impenssable !! En situation "labo" on peut s'en accomoder
+ * parfois (relancer...) mais dans la vrai vie, ce n'est pas possible. Donc soit on a une solution robuste qui permet
+ * d'eviter/limiter la corruption de fichier, soit la solution HDF5 n'est pas viable.
+ * Dans les pistes de solutions trouvees on a:
+ * - du flush regulier --> systematique c'est extremement couteux et met en peril l'interet de H5PT...
+ * - du flush controle (on accepte de pouvoir perdre quelques pas de temps) -> voir un optimum...
+ * - de l'utilsation de fichiers hdf5 en mode SWMR et de la correction de fichier via l'outil h5clean -> a tester !
+ *
+ *
+ */
 struct MyRecord {
   int f1;
   double f2;
@@ -34,9 +81,9 @@ int main() {
   hid_t datatype = H5Tcreate(H5T_COMPOUND, sizeof(MyRecord));
 
   /// Adding fields to the datatype
-  H5Tinsert(datatype, "Field 1", HOFFSET (MyRecord, f1), H5T_NATIVE_INT);
-  H5Tinsert(datatype, "Field 2", HOFFSET (MyRecord, f2), H5T_NATIVE_DOUBLE);
-  H5Tinsert(datatype, "Field 3", HOFFSET (MyRecord, f3), H5T_NATIVE_INT);
+  H5Tinsert(datatype, "Field 1", HOFFSET(MyRecord, f1), H5T_NATIVE_INT);
+  H5Tinsert(datatype, "Field 2", HOFFSET(MyRecord, f2), H5T_NATIVE_DOUBLE);
+  H5Tinsert(datatype, "Field 3", HOFFSET(MyRecord, f3), H5T_NATIVE_INT);
 
 
   /// Playing around with memory layout of the datatype
@@ -53,8 +100,12 @@ int main() {
 
 
 
-  exit(EXIT_SUCCESS);
+//  exit(EXIT_SUCCESS);
 
+
+  // TODO: gerer le fichier en SWMR de maniere a pouvoir reparer un fichier corrompu (crash programme sans H5Fclose)
+  // Reparation avec l'outil h5clean
+  // voir: https://forum.hdfgroup.org/t/avoiding-a-corrupted-hdf5-file-or-be-able-to-recover-it/5441/2
 
   /// Creating the new hdf5 file
   hid_t file_id = H5Fcreate("essai.h5", H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
@@ -63,28 +114,18 @@ int main() {
 
   herr_t err;
 
-//  /// Prepare property list to set compression, randomly use deflate with compression level 5
-//  hid_t plistID = H5Pcreate(H5P_DATASET_CREATE);
-//  herr_t err = H5Pset_deflate(plistID, 5);
-//  if (err < 0)
-//    fprintf(stderr, "Error setting compression level.");
-
   /// Create a fixed length packet table
-////  FL_PacketTable table(file_id, "My Table", datatype, 100, plistID);
-//  FL_PacketTable table(file_id, "My Table", datatype, 100, H5P_DEFAULT);
-//  if (!table.IsValid())
-//    fprintf(stderr, "Unable to create packet table.");
-
   hid_t table_id = H5PTcreate_fl(file_id, "My Table", datatype, 100, 5);
 
-  // Close the table
+  /// Close the table
   H5PTclose(table_id);
-
 
   /// Closing the file
   err = H5Fclose(file_id);
   if (err < 0)
     fprintf(stderr, "Failed to close file.\n");
+
+
 
   /// Do other stuffs...
   /// ...
@@ -97,7 +138,7 @@ int main() {
   /// Building a new record
   MyRecord record;
   record.f1 = rand() % 100;
-  record.f2 = (double)rand() / RAND_MAX;
+  record.f2 = (double) rand() / RAND_MAX;
   record.f3 = rand() % 100;
 
 
@@ -131,7 +172,6 @@ int main() {
   err = H5Fclose(file_id);
   if (err < 0)
     fprintf(stderr, "Failed to close file.\n");
-
 
 
   timer.stop();

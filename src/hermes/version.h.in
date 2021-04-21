@@ -63,7 +63,7 @@ namespace hermes {
       std::string version("@GIT_LAST_TAG@");
 
       auto cur_branch = CurrentBranch();
-      if (not cur_branch.empty()) {
+      if (!cur_branch.empty()) {
         version += "_" + cur_branch;
       }
 
