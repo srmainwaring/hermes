@@ -7,7 +7,7 @@
 
 cmake_minimum_required(VERSION 3.11 FATAL_ERROR)
 
-project(hermes LANGUAGES CXX)
+project(hermes LANGUAGES C CXX)
 
 
 # Prevent in-source build
@@ -44,16 +44,14 @@ if (NOT EXISTS ${POST_CONFIGURE_FILE})
     configure_file(${PRE_CONFIGURE_FILE} ${POST_CONFIGURE_FILE})
 endif()
 
-
 #=============================================================================
 # Hermes options
 #=============================================================================
 cmake_policy(SET CMP0077 NEW)
 
-option(HERMES_USE_HDF5 "Activate HDF5 as serialization tool" OFF)
+option(BUILD_SHARED_LIBS "Shared lib version" ON)
+option(HERMES_USE_HDF5 "Activate HDF5 as serialization tool" ON)
 option(HERMES_BUILD_TESTS "Tests building." ON)
-option(BUILD_SHARED_LIBS "" ON)
-
 
 #=============================================================================
 # Hermes dependencies
@@ -65,7 +63,7 @@ include(cmake/Add_Eigen3.cmake)
 if (HERMES_USE_HDF5)
     message(STATUS "hermes can use HDF5 as a serialization target")
     include(cmake/Add_HDF5.cmake)
-    include(cmake/Add_HighFive.cmake)
+#    include(cmake/Add_HighFive.cmake)
 endif ()
 
 # For Windows (exposing public API)
@@ -77,9 +75,23 @@ set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 add_library(hermes INTERFACE)
 add_dependencies(hermes check_git_hermes) # For git_watcher to fetch git informations before effective build
 
-add_subdirectory(src)
+target_include_directories(hermes INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_include_directories(hermes INTERFACE ${CMAKE_CURRENT_BINARY_DIR}/src)
 
 target_link_libraries(hermes INTERFACE fmt Eigen3::Eigen)
+
+if (HERMES_USE_HDF5)
+    target_compile_definitions(hermes INTERFACE USE_HDF5)
+#    target_link_libraries(hermes INTERFACE HighFive)
+    if (BUILD_SHARED_LIBS)
+        message(STATUS "Using HDF5 SHARED lib into hermes")
+        target_link_libraries(hermes INTERFACE hdf5_cpp-shared)
+    else ()
+        message(STATUS "Using HDF5 STATIC lib into hermes")
+        target_link_libraries(hermes INTERFACE hdf5_cpp-static)
+        set_property(TARGET hermes PROPERTY POSITION_INDEPENDENT_CODE ON)
+    endif ()
+endif()
 
 
 # Adding tests

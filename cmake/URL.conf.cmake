@@ -15,3 +15,7 @@ set(highfive_PATCH highfive.patch CACHE STRING "highfive version")
 set(HDF5_URL https://github.com/HDFGroup/hdf5.git)
 set(HDF5_TAG hdf5-1_10_6 CACHE STRING "HDF5 version")
 set(HDF5_PATCH hdf5.patch)
+
+# diemer
+set(diemer_URL git@d-ice.gitlab.host:common/diemer.git)
+set(diemer_TAG master)
