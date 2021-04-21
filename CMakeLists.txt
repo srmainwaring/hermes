@@ -49,6 +49,12 @@ endif()
 #=============================================================================
 cmake_policy(SET CMP0077 NEW)
 
+#=============================================================================
+# Hermes options
+#=============================================================================
+option(HERMES_BUILD_TESTS "Tests building." ON)
+option(BUILD_SHARED_LIBS "" ON)
+
 option(BUILD_SHARED_LIBS "Shared lib version" ON)
 option(HERMES_USE_HDF5 "Activate HDF5 as serialization tool" ON)
 option(HERMES_BUILD_TESTS "Tests building." ON)

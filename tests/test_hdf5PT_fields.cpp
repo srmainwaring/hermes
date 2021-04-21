@@ -65,9 +65,16 @@
  *
  */
 struct MyRecord {
-  int f1;
-  double f2;
-  int f3;
+  int f0;
+  double f1;
+  int f2;
+//  double f3;
+//  int f4;
+//  double f5;
+//  int f6;
+//  double f7;
+//  int f8;
+//  double f9;
 };
 
 
@@ -81,9 +88,16 @@ int main() {
   hid_t datatype = H5Tcreate(H5T_COMPOUND, sizeof(MyRecord));
 
   /// Adding fields to the datatype
-  H5Tinsert(datatype, "Field 1", HOFFSET(MyRecord, f1), H5T_NATIVE_INT);
-  H5Tinsert(datatype, "Field 2", HOFFSET(MyRecord, f2), H5T_NATIVE_DOUBLE);
-  H5Tinsert(datatype, "Field 3", HOFFSET(MyRecord, f3), H5T_NATIVE_INT);
+  H5Tinsert(datatype, "Field 0", HOFFSET(MyRecord, f0), H5T_NATIVE_INT);
+  H5Tinsert(datatype, "Field 1", HOFFSET(MyRecord, f1), H5T_NATIVE_DOUBLE);
+  H5Tinsert(datatype, "Field 2", HOFFSET(MyRecord, f2), H5T_NATIVE_INT);
+//  H5Tinsert(datatype, "Field 3", HOFFSET(MyRecord, f3), H5T_NATIVE_DOUBLE);
+//  H5Tinsert(datatype, "Field 4", HOFFSET(MyRecord, f4), H5T_NATIVE_INT);
+//  H5Tinsert(datatype, "Field 5", HOFFSET(MyRecord, f5), H5T_NATIVE_DOUBLE);
+//  H5Tinsert(datatype, "Field 6", HOFFSET(MyRecord, f6), H5T_NATIVE_INT);
+//  H5Tinsert(datatype, "Field 7", HOFFSET(MyRecord, f7), H5T_NATIVE_DOUBLE);
+//  H5Tinsert(datatype, "Field 8", HOFFSET(MyRecord, f8), H5T_NATIVE_INT);
+//  H5Tinsert(datatype, "Field 9", HOFFSET(MyRecord, f9), H5T_NATIVE_DOUBLE);
 
 
   /// Playing around with memory layout of the datatype
@@ -115,7 +129,7 @@ int main() {
   herr_t err;
 
   /// Create a fixed length packet table
-  hid_t table_id = H5PTcreate_fl(file_id, "My Table", datatype, 100, 5);
+  hid_t table_id = H5PTcreate_fl(file_id, "My Table", datatype, 100, -1);
 
   /// Close the table
   H5PTclose(table_id);
@@ -137,9 +151,16 @@ int main() {
 
   /// Building a new record
   MyRecord record;
-  record.f1 = rand() % 100;
-  record.f2 = (double) rand() / RAND_MAX;
-  record.f3 = rand() % 100;
+  record.f0 = rand() % 100;
+  record.f1 = (double) rand() / RAND_MAX;
+  record.f2 = rand() % 100;
+//  record.f3 = (double) rand() / RAND_MAX;
+//  record.f4 = rand() % 100;
+//  record.f5 = (double) rand() / RAND_MAX;
+//  record.f6 = rand() % 100;
+//  record.f7 = (double) rand() / RAND_MAX;
+//  record.f8 = rand() % 100;
+//  record.f9 = (double) rand() / RAND_MAX;
 
 
   timer.start();
