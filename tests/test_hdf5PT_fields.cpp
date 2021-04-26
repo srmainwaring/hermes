@@ -18,7 +18,8 @@
 
 #include "diemer/Timer.h"
 
-const int N = 1300000;
+const int N = 13000000;
+const int iflush_period = 100;
 
 
 
@@ -171,7 +172,10 @@ int main() {
 
   timer.start();
 
+
+
   int i = 0;
+  int iflush = 1;
   while (i < N) {
 
     /*
@@ -190,8 +194,13 @@ int main() {
     if (err < 0)
       fprintf(stderr, "Error adding record.");
 
-//    err = H5Fflush(file_id, H5F_SCOPE_LOCAL); // FIXME: Tres grosse perte de perf...
+    if (iflush == 100) {
+      err = H5Fflush(file_id, H5F_SCOPE_LOCAL); // FIXME: Tres grosse perte de perf...
+      iflush = 1;
+//      std::cout << "Flush at " << i << std::endl;
+    }
 
+    iflush++;
     i++;
   }
 
