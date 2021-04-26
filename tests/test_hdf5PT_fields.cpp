@@ -16,10 +16,13 @@
 
 #include "H5PacketTable.h"
 
+#include "hermes/hermes.h"
+
 #include "diemer/Timer.h"
 
-const int N = 13000000;
-const int iflush_period = 100;
+const int N = 1300000;
+const int FLUSH_PERIOD = 50;
+const int COMPRESSION_FACTOR = 1;
 
 
 
@@ -97,10 +100,8 @@ MyRecord get_random_record() {
   return record;
 }
 
-int main() {
 
-  diemer::Timer<double> timer;
-
+void test_hdf5() {
   /// Create datatype to be used to write data in the Table and based on the struct MyRecord
   hid_t datatype = H5Tcreate(H5T_COMPOUND, sizeof(MyRecord));
 
@@ -126,14 +127,6 @@ int main() {
 //  std::cout << HOFFSET (MyRecord, f3) << std::endl;
 
 
-
-
-
-
-
-//  exit(EXIT_SUCCESS);
-
-
   // TODO: gerer le fichier en SWMR de maniere a pouvoir reparer un fichier corrompu (crash programme sans H5Fclose)
   // Reparation avec l'outil h5clean
   // voir: https://forum.hdfgroup.org/t/avoiding-a-corrupted-hdf5-file-or-be-able-to-recover-it/5441/2
@@ -146,7 +139,7 @@ int main() {
   herr_t err;
 
   /// Create a fixed length packet table
-  hid_t table_id = H5PTcreate_fl(file_id, "My Table", datatype, 100, -1);
+  hid_t table_id = H5PTcreate_fl(file_id, "My Table", datatype, 100, COMPRESSION_FACTOR);
 
   /// Close the table
   H5PTclose(table_id);
@@ -156,23 +149,15 @@ int main() {
   if (err < 0)
     fprintf(stderr, "Failed to close file.\n");
 
-
-
   /// Do other stuffs...
   /// ...
-
 
   /// Opening the file
   file_id = H5Fopen("essai.h5", H5F_ACC_RDWR, H5P_DEFAULT);
   hid_t table_loc_id = H5PTopen(file_id, "My Table");
 
-//  /// Building a new record
-//  auto record = get_random_record();
-
-
+  diemer::Timer<double> timer;
   timer.start();
-
-
 
   int i = 0;
   int iflush = 1;
@@ -184,6 +169,8 @@ int main() {
      * Clairement, ouvrir et fermer les fichiers et tables resulte en une tres forte baisse de perf
      * Par contre, si on ne le fait pas, on risque reellement en cas de crash d'obtenir un fichier corrompu
      * Il faut donc proteger contre les crash
+     * Un flush a une certaine frequence, permet dans les tests effectues de pouvoir recuperer le fichier dans l'etat
+     * du dernier flush
      */
 
     /// Building a new record
@@ -194,15 +181,24 @@ int main() {
     if (err < 0)
       fprintf(stderr, "Error adding record.");
 
-    if (iflush == 100) {
-      err = H5Fflush(file_id, H5F_SCOPE_LOCAL); // FIXME: Tres grosse perte de perf...
+    /// Flushing buffer at FLUSH_PERIOD rate
+    if (iflush == FLUSH_PERIOD) {
+      /*
+       * FIXME: Grosse perte de perf si fait trop souvent
+       * Il y a certainement un optimum suivant la quantite de donnees a enregistrer
+       * Peut-on avoir une flush period adaptative travaillant avec les timings ?
+       * On pourrait placer la flush period dans le fichier de config frydom
+       *
+       */
+      err = H5Fflush(file_id, H5F_SCOPE_LOCAL);
+
       iflush = 1;
-//      std::cout << "Flush at " << i << std::endl;
     }
 
     iflush++;
     i++;
   }
+  err = H5Fflush(file_id, H5F_SCOPE_LOCAL);
 
   // Close the table
   H5PTclose(table_loc_id);
@@ -212,17 +208,84 @@ int main() {
   if (err < 0)
     fprintf(stderr, "Failed to close file.\n");
 
-
   timer.stop();
-  std::cout << "I/O took: "
+  std::cout << "HDF5 I/O took: "
             << timer() << " seconds for "
             << N << " records composed of 10 fields of data"
             << std::endl;
 
-//  /// Closing the file
+
+  //  /// Closing the file
 //  err = H5Fclose(file_id);
 //  if (err < 0)
 //    fprintf(stderr, "Failed to close file.\n");
+
+}
+
+void test_csv() {
+  hermes::Message msg("essai", "");
+
+  auto record = get_random_record();
+
+  msg.AddField("Field 0", "_", "", &record.f0);
+  msg.AddField("Field 1", "_", "", &record.f1);
+  msg.AddField("Field 2", "_", "", &record.f2);
+  msg.AddField("Field 3", "_", "", &record.f3);
+  msg.AddField("Field 4", "_", "", &record.f4);
+  msg.AddField("Field 5", "_", "", &record.f5);
+  msg.AddField("Field 6", "_", "", &record.f6);
+  msg.AddField("Field 7", "_", "", &record.f7);
+  msg.AddField("Field 8", "_", "", &record.f8);
+  msg.AddField("Field 9", "_", "", &record.f9);
+
+  msg.AddCSVSerializer("essai.csv");
+
+  msg.Initialize();
+
+  diemer::Timer<double> timer;
+  timer.start();
+
+
+  int i = 0;
+  int iflush = 1;
+  while (i < N) {
+
+    /// Building a new record
+    record = get_random_record();
+
+    /// Appending the record to the CSV file
+    msg.Serialize();
+
+    /// Flushing buffer at FLUSH_PERIOD rate
+    if (iflush == FLUSH_PERIOD) {
+      msg.Send();
+
+      iflush = 1;
+    }
+
+    iflush++;
+    i++;
+  }
+
+
+
+  timer.stop();
+  std::cout << "CSV I/O took: "
+            << timer() << " seconds for "
+            << N << " records composed of 10 fields of data"
+            << std::endl;
+}
+
+
+
+int main() {
+
+  test_hdf5();
+
+  test_csv();
+
+
+
 
   return 0;
 };
