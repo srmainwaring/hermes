@@ -27,9 +27,9 @@ class CSVSerializer : public Serializer {
 
     void visit(const Field<bool> *field) override { visit((FieldBase *) field); }
 
-    void visit(const Field<std::string> *field) override { visit((FieldBase *) field); }
+    void visit(const Field <std::string> *field) override { visit((FieldBase *) field); }
 
-    void visit(const Field<Eigen::Matrix<double, 3, 1>> *field) override {
+    void visit(const Field <Eigen::Matrix<double, 3, 1>> *field) override {
       auto name = field->GetName();
       fmt::format_to(m_serializer->m_buffer, "{}{}{}",
                      name + "_0" + m_serializer->m_delimiter,
@@ -37,7 +37,7 @@ class CSVSerializer : public Serializer {
                      name + "_2" + m_serializer->m_delimiter); // FIXME : permettre de fixer des regles d'indicage...
     }
 
-    void visit(const Field<std::vector<double>> *field) override {
+    void visit(const Field <std::vector<double>> *field) override {
       auto n = field->GetData().size();
       auto name = field->GetName();
       for (int i = 0; i < n; i++) {
@@ -45,7 +45,7 @@ class CSVSerializer : public Serializer {
       }
     }
 
-    void visit(const Field<std::function<double()>> *field) { visit((FieldBase *) field); }
+    void visit(const Field <std::function<double()>> *field) { visit((FieldBase *) field); }
 
 
   };
@@ -68,14 +68,14 @@ class CSVSerializer : public Serializer {
 
     void visit(const Field<bool> *field) override { visit((FieldBase *) field); }
 
-    void visit(const Field<std::string> *field) override { visit((FieldBase *) field); }
+    void visit(const Field <std::string> *field) override { visit((FieldBase *) field); }
 
-    void visit(const Field<Eigen::Matrix<double, 3, 1>> *field) override {
+    void visit(const Field <Eigen::Matrix<double, 3, 1>> *field) override {
       std::string unit_ = field->GetUnit() + m_serializer->m_delimiter;
       fmt::format_to(m_serializer->m_buffer, "{}{}{}", unit_, unit_, unit_);
     }
 
-    void visit(const Field<std::vector<double>> *field) override {
+    void visit(const Field <std::vector<double>> *field) override {
       auto n = field->GetData().size();
       auto unit_ = field->GetUnit();
       for (int i = 0; i < n; i++) {
@@ -83,7 +83,7 @@ class CSVSerializer : public Serializer {
       }
     }
 
-    void visit(const Field<std::function<double()>> *field) { visit((FieldBase *) field); }
+    void visit(const Field <std::function<double()>> *field) { visit((FieldBase *) field); }
   };
 
   class SerializeVisitor : public SerializationVisitor<CSVSerializer> {
@@ -108,11 +108,11 @@ class CSVSerializer : public Serializer {
       fmt::format_to(m_serializer->m_buffer, "{:d}{:s}", field->GetData(), m_serializer->m_delimiter);
     }
 
-    void visit(const Field<std::string> *field) override {
+    void visit(const Field <std::string> *field) override {
       fmt::format_to(m_serializer->m_buffer, "{:s}{:s}", field->GetData(), m_serializer->m_delimiter);
     }
 
-    void visit(const Field<Eigen::Matrix<double, 3, 1>> *field) override {
+    void visit(const Field <Eigen::Matrix<double, 3, 1>> *field) override {
       auto vector = field->GetData();
       fmt::format_to(m_serializer->m_buffer, "{:.12g}{:s}{:.12g}{:s}{:.12g}{:s}",
                      vector[0], m_serializer->m_delimiter,
@@ -121,14 +121,14 @@ class CSVSerializer : public Serializer {
       );
     }
 
-    void visit(const Field<std::vector<double>> *field) override {
+    void visit(const Field <std::vector<double>> *field) override {
       auto vector = field->GetData();
       for (const auto &element: vector) {
         fmt::format_to(m_serializer->m_buffer, "{:.12g}{}", element, m_serializer->m_delimiter);
       }
     }
 
-    void visit(const Field<std::function<double()>> *field) {
+    void visit(const Field <std::function<double()>> *field) {
       fmt::format_to(m_serializer->m_buffer, "{:.12g}{:s}", (field->GetData())(), m_serializer->m_delimiter);
     }
 
@@ -136,7 +136,7 @@ class CSVSerializer : public Serializer {
 
   std::string GetCSVLine() {
     // Adding the final line break
-    fmt::format_to(m_buffer, "\n");
+//    fmt::format_to(m_buffer, "\n");
     return fmt::to_string(m_buffer);
   }
 
@@ -148,34 +148,45 @@ class CSVSerializer : public Serializer {
 
   void Initialize(const Message *msg) override {
 
-    InitVisitor visitor(this);
-    msg->ApplyVisitor(visitor);
-    fmt::format_to(m_buffer, "\n");
+    if (!m_is_initialized) {
 
-    UnitLineVisitor unitLineVisitor(this);
-    msg->ApplyVisitor(unitLineVisitor);
+      // Creating file over existing file
+      m_file.open(m_CSVFile, std::ios::trunc);
 
+      // First line of header (columns names line)
+      InitVisitor visitor(this);
+      msg->ApplyVisitor(visitor);
+      fmt::format_to(m_buffer, "\n");
+
+      // Second line of header (units line)
+      UnitLineVisitor unitLineVisitor(this);
+      msg->ApplyVisitor(unitLineVisitor);
+      fmt::format_to(m_buffer, "\n");
+
+      // Writing buffer to file
+      m_file << GetCSVLine();
+
+      m_file.close();
+      m_buffer.clear();
+
+      m_is_initialized = true; // This message is now initialized
+    }
   }
 
   void Serialize(const Message *msg) override {
+    if (!m_is_initialized) {
+      Initialize(msg);
+    }
     msg->ApplyVisitor(m_serializeVisitor);
+    fmt::format_to(m_buffer, "\n");
   }
 
   void Finalize(const Message *msg) override {}
 
   void Send(const Message *msg) override {
-
-    if (c_IsInitialized) {
-      m_file.open(m_CSVFile, std::ios::app);
-    } else {
-      m_file.open(m_CSVFile, std::ios::trunc);
-      c_IsInitialized = true;
-    }
-
+    m_file.open(m_CSVFile, std::ios::app);
     m_file << GetCSVLine();
-
     m_file.close();
-
     m_buffer.clear();
   }
 
@@ -190,7 +201,7 @@ class CSVSerializer : public Serializer {
   std::string m_CSVFile;
   std::ofstream m_file;
 
-  bool c_IsInitialized = false;
+  bool m_is_initialized = false;
 
 };
 

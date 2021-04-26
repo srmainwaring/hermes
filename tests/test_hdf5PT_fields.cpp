@@ -10,19 +10,37 @@
  *
  */
 
-
 #include <cstdlib>
 #include <iostream>
+#include <filesystem>
 
 #include "H5PacketTable.h"
 
 #include "hermes/hermes.h"
-
 #include "diemer/Timer.h"
 
 const int N = 1300000;
-const int FLUSH_PERIOD = 50;
-const int COMPRESSION_FACTOR = 1;
+const int FLUSH_PERIOD = 100;
+const int COMPRESSION_LEVEL = 1;
+
+struct HumanReadable {
+  // https://en.cppreference.com/w/cpp/filesystem/directory_entry/file_size
+  uintmax_t size{};
+
+  template<typename Os>
+  friend Os &operator<<(Os &os, HumanReadable hr) {
+    int i{};
+    double mantissa = hr.size;
+    for (; mantissa >= 1024.; ++i) {
+      mantissa /= 1024.;
+    }
+    mantissa = std::ceil(mantissa * 10.) / 10.;
+    os << mantissa << "BKMGTPE"[i];
+    return i == 0 ? os : os << "B (" << hr.size << ')';
+  }
+};
+
+
 
 
 
@@ -102,6 +120,17 @@ MyRecord get_random_record() {
 
 
 void test_hdf5() {
+
+  /*
+   * TODO:
+   * - ajouter unites pour chaque field
+   * - ajouter description pour chaque field
+   *
+   * Utiliser le metadonnees (attributs). Peut-on avoir des attributs par champ dans la table ??
+   *
+   */
+
+
   /// Create datatype to be used to write data in the Table and based on the struct MyRecord
   hid_t datatype = H5Tcreate(H5T_COMPOUND, sizeof(MyRecord));
 
@@ -139,7 +168,7 @@ void test_hdf5() {
   herr_t err;
 
   /// Create a fixed length packet table
-  hid_t table_id = H5PTcreate_fl(file_id, "My Table", datatype, 100, COMPRESSION_FACTOR);
+  hid_t table_id = H5PTcreate_fl(file_id, "My Table", datatype, 100, COMPRESSION_LEVEL);
 
   /// Close the table
   H5PTclose(table_id);
@@ -164,6 +193,7 @@ void test_hdf5() {
   while (i < N) {
 
     /*
+     * FIXME:
      * Remarques de performance
      *
      * Clairement, ouvrir et fermer les fichiers et tables resulte en une tres forte baisse de perf
@@ -171,6 +201,14 @@ void test_hdf5() {
      * Il faut donc proteger contre les crash
      * Un flush a une certaine frequence, permet dans les tests effectues de pouvoir recuperer le fichier dans l'etat
      * du dernier flush
+     */
+
+    /*
+     * FIXME:
+     * Pour etre utilisable sans modification de l'existant dans les codes, il convient de ne pas etre oblige de
+     * definir une structure supplementaire pour chaque message. On desire lors du Serialize pouvoir construire
+     * un array de bytes qui soit directement ajoutable au packet table !!!
+     * C'est de loin le plus complique ici !!!!!!!!!!
      */
 
     /// Building a new record
@@ -182,7 +220,7 @@ void test_hdf5() {
       fprintf(stderr, "Error adding record.");
 
     /// Flushing buffer at FLUSH_PERIOD rate
-    if (iflush == FLUSH_PERIOD) {
+    if (iflush >= FLUSH_PERIOD) {
       /*
        * FIXME: Grosse perte de perf si fait trop souvent
        * Il y a certainement un optimum suivant la quantite de donnees a enregistrer
@@ -211,7 +249,10 @@ void test_hdf5() {
   timer.stop();
   std::cout << "HDF5 I/O took: "
             << timer() << " seconds for "
-            << N << " records composed of 10 fields of data"
+            << N << " records composed of 10 fields of data "
+            << ", file size is "
+            << HumanReadable{std::filesystem::file_size("essai.h5")}
+            << "\t[COMPRESSION LEVEL: " << COMPRESSION_LEVEL << "]"
             << std::endl;
 
 
@@ -257,7 +298,7 @@ void test_csv() {
     msg.Serialize();
 
     /// Flushing buffer at FLUSH_PERIOD rate
-    if (iflush == FLUSH_PERIOD) {
+    if (iflush >= FLUSH_PERIOD) {
       msg.Send();
 
       iflush = 1;
@@ -268,14 +309,14 @@ void test_csv() {
   }
 
 
-
   timer.stop();
-  std::cout << "CSV I/O took: "
+  std::cout << "CSV  I/O took: "
             << timer() << " seconds for "
             << N << " records composed of 10 fields of data"
+            << ", file size is "
+            << HumanReadable{std::filesystem::file_size("essai.csv")}
             << std::endl;
 }
-
 
 
 int main() {
@@ -283,8 +324,6 @@ int main() {
   test_hdf5();
 
   test_csv();
-
-
 
 
   return 0;
