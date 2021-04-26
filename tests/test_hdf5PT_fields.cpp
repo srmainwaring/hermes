@@ -18,6 +18,10 @@
 
 #include "diemer/Timer.h"
 
+const int N = 1300000;
+
+
+
 /*
  * On fait le choix de ne pas reposer (le moins possible) sur des interfaces high-level
  * Ceci a but de performances
@@ -49,7 +53,7 @@
  * 1 - on doit etre capables d'abouter des champs de message hermes sous forme de tableaux de bytes
  * 2 - le COMPOUND datatype HDF5 est defini a l'aide d'offsets qui correspondent et bases sur les types natifs portables
  * 3 - on a suffisamment d'introspection dans les fichiers HDF5 pour etre capables de lire les records sans connaitres
- * leur layout memoire sur le disque
+ * leur layout memoire sur le disque ---> HDFview sait le faire !!! On doit savoir le faire !
  * 4 - il faut que les IO soient rapides
  *
  * Autre aspect crucial est d'etre tolerant quant aux arrets brutaux de programmes (crash ou arret de type CTRL-C)
@@ -68,17 +72,29 @@ struct MyRecord {
   int f0;
   double f1;
   int f2;
-//  double f3;
-//  int f4;
-//  double f5;
-//  int f6;
-//  double f7;
-//  int f8;
-//  double f9;
+  double f3;
+  int f4;
+  double f5;
+  int f6;
+  double f7;
+  int f8;
+  double f9;
 };
 
-
-const int N = 1000000;
+MyRecord get_random_record() {
+  MyRecord record;
+  record.f0 = rand() % 100;
+  record.f1 = (double) rand() / RAND_MAX;
+  record.f2 = rand() % 100;
+  record.f3 = (double) rand() / RAND_MAX;
+  record.f4 = rand() % 100;
+  record.f5 = (double) rand() / RAND_MAX;
+  record.f6 = rand() % 100;
+  record.f7 = (double) rand() / RAND_MAX;
+  record.f8 = rand() % 100;
+  record.f9 = (double) rand() / RAND_MAX;
+  return record;
+}
 
 int main() {
 
@@ -91,13 +107,13 @@ int main() {
   H5Tinsert(datatype, "Field 0", HOFFSET(MyRecord, f0), H5T_NATIVE_INT);
   H5Tinsert(datatype, "Field 1", HOFFSET(MyRecord, f1), H5T_NATIVE_DOUBLE);
   H5Tinsert(datatype, "Field 2", HOFFSET(MyRecord, f2), H5T_NATIVE_INT);
-//  H5Tinsert(datatype, "Field 3", HOFFSET(MyRecord, f3), H5T_NATIVE_DOUBLE);
-//  H5Tinsert(datatype, "Field 4", HOFFSET(MyRecord, f4), H5T_NATIVE_INT);
-//  H5Tinsert(datatype, "Field 5", HOFFSET(MyRecord, f5), H5T_NATIVE_DOUBLE);
-//  H5Tinsert(datatype, "Field 6", HOFFSET(MyRecord, f6), H5T_NATIVE_INT);
-//  H5Tinsert(datatype, "Field 7", HOFFSET(MyRecord, f7), H5T_NATIVE_DOUBLE);
-//  H5Tinsert(datatype, "Field 8", HOFFSET(MyRecord, f8), H5T_NATIVE_INT);
-//  H5Tinsert(datatype, "Field 9", HOFFSET(MyRecord, f9), H5T_NATIVE_DOUBLE);
+  H5Tinsert(datatype, "Field 3", HOFFSET(MyRecord, f3), H5T_NATIVE_DOUBLE);
+  H5Tinsert(datatype, "Field 4", HOFFSET(MyRecord, f4), H5T_NATIVE_INT);
+  H5Tinsert(datatype, "Field 5", HOFFSET(MyRecord, f5), H5T_NATIVE_DOUBLE);
+  H5Tinsert(datatype, "Field 6", HOFFSET(MyRecord, f6), H5T_NATIVE_INT);
+  H5Tinsert(datatype, "Field 7", HOFFSET(MyRecord, f7), H5T_NATIVE_DOUBLE);
+  H5Tinsert(datatype, "Field 8", HOFFSET(MyRecord, f8), H5T_NATIVE_INT);
+  H5Tinsert(datatype, "Field 9", HOFFSET(MyRecord, f9), H5T_NATIVE_DOUBLE);
 
 
   /// Playing around with memory layout of the datatype
@@ -149,18 +165,8 @@ int main() {
   file_id = H5Fopen("essai.h5", H5F_ACC_RDWR, H5P_DEFAULT);
   hid_t table_loc_id = H5PTopen(file_id, "My Table");
 
-  /// Building a new record
-  MyRecord record;
-  record.f0 = rand() % 100;
-  record.f1 = (double) rand() / RAND_MAX;
-  record.f2 = rand() % 100;
-//  record.f3 = (double) rand() / RAND_MAX;
-//  record.f4 = rand() % 100;
-//  record.f5 = (double) rand() / RAND_MAX;
-//  record.f6 = rand() % 100;
-//  record.f7 = (double) rand() / RAND_MAX;
-//  record.f8 = rand() % 100;
-//  record.f9 = (double) rand() / RAND_MAX;
+//  /// Building a new record
+//  auto record = get_random_record();
 
 
   timer.start();
@@ -175,6 +181,9 @@ int main() {
      * Par contre, si on ne le fait pas, on risque reellement en cas de crash d'obtenir un fichier corrompu
      * Il faut donc proteger contre les crash
      */
+
+    /// Building a new record
+    auto record = get_random_record();
 
     /// Appending the record to the packet table
     err = H5PTappend(table_loc_id, 1, &record);
@@ -196,7 +205,10 @@ int main() {
 
 
   timer.stop();
-  std::cout << "I/O took: " << timer() << " seconds for " << N << " records in the table" << std::endl;
+  std::cout << "I/O took: "
+            << timer() << " seconds for "
+            << N << " records composed of 10 fields of data"
+            << std::endl;
 
 //  /// Closing the file
 //  err = H5Fclose(file_id);
