@@ -13,6 +13,7 @@ if (HERMES_USE_HDF5)
             test_hdf5PT
             test_hdf5TB
             test_hdf5PT_fields
+            test_byte_serialize
             )
 endif ()
 

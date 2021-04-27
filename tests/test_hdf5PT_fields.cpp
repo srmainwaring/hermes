@@ -19,7 +19,7 @@
 #include "hermes/hermes.h"
 #include "diemer/Timer.h"
 
-const int N = 1300000;
+const int N = 1000000;
 const int FLUSH_PERIOD = 100;
 const int COMPRESSION_LEVEL = 1;
 
@@ -39,9 +39,6 @@ struct HumanReadable {
     return i == 0 ? os : os << "B (" << hr.size << ')';
   }
 };
-
-
-
 
 
 /*
@@ -90,31 +87,40 @@ struct HumanReadable {
  *
  *
  */
+
+/*
+ * TODO: mettre en place un groupe
+ * mettre en place 2 tables dans des groupes differents
+ *
+ */
+
+
+
 struct MyRecord {
   int f0;
   double f1;
-  int f2;
-  double f3;
-  int f4;
-  double f5;
-  int f6;
-  double f7;
-  int f8;
-  double f9;
+//  int f2;
+//  double f3;
+//  int f4;
+//  double f5;
+//  int f6;
+//  double f7;
+//  int f8;
+//  double f9;
 };
 
 MyRecord get_random_record() {
   MyRecord record;
   record.f0 = rand() % 100;
   record.f1 = (double) rand() / RAND_MAX;
-  record.f2 = rand() % 100;
-  record.f3 = (double) rand() / RAND_MAX;
-  record.f4 = rand() % 100;
-  record.f5 = (double) rand() / RAND_MAX;
-  record.f6 = rand() % 100;
-  record.f7 = (double) rand() / RAND_MAX;
-  record.f8 = rand() % 100;
-  record.f9 = (double) rand() / RAND_MAX;
+//  record.f2 = rand() % 100;
+//  record.f3 = (double) rand() / RAND_MAX;
+//  record.f4 = rand() % 100;
+//  record.f5 = (double) rand() / RAND_MAX;
+//  record.f6 = rand() % 100;
+//  record.f7 = (double) rand() / RAND_MAX;
+//  record.f8 = rand() % 100;
+//  record.f9 = (double) rand() / RAND_MAX;
   return record;
 }
 
@@ -137,14 +143,14 @@ void test_hdf5() {
   /// Adding fields to the datatype
   H5Tinsert(datatype, "Field 0", HOFFSET(MyRecord, f0), H5T_NATIVE_INT);
   H5Tinsert(datatype, "Field 1", HOFFSET(MyRecord, f1), H5T_NATIVE_DOUBLE);
-  H5Tinsert(datatype, "Field 2", HOFFSET(MyRecord, f2), H5T_NATIVE_INT);
-  H5Tinsert(datatype, "Field 3", HOFFSET(MyRecord, f3), H5T_NATIVE_DOUBLE);
-  H5Tinsert(datatype, "Field 4", HOFFSET(MyRecord, f4), H5T_NATIVE_INT);
-  H5Tinsert(datatype, "Field 5", HOFFSET(MyRecord, f5), H5T_NATIVE_DOUBLE);
-  H5Tinsert(datatype, "Field 6", HOFFSET(MyRecord, f6), H5T_NATIVE_INT);
-  H5Tinsert(datatype, "Field 7", HOFFSET(MyRecord, f7), H5T_NATIVE_DOUBLE);
-  H5Tinsert(datatype, "Field 8", HOFFSET(MyRecord, f8), H5T_NATIVE_INT);
-  H5Tinsert(datatype, "Field 9", HOFFSET(MyRecord, f9), H5T_NATIVE_DOUBLE);
+//  H5Tinsert(datatype, "Field 2", HOFFSET(MyRecord, f2), H5T_NATIVE_INT);
+//  H5Tinsert(datatype, "Field 3", HOFFSET(MyRecord, f3), H5T_NATIVE_DOUBLE);
+//  H5Tinsert(datatype, "Field 4", HOFFSET(MyRecord, f4), H5T_NATIVE_INT);
+//  H5Tinsert(datatype, "Field 5", HOFFSET(MyRecord, f5), H5T_NATIVE_DOUBLE);
+//  H5Tinsert(datatype, "Field 6", HOFFSET(MyRecord, f6), H5T_NATIVE_INT);
+//  H5Tinsert(datatype, "Field 7", HOFFSET(MyRecord, f7), H5T_NATIVE_DOUBLE);
+//  H5Tinsert(datatype, "Field 8", HOFFSET(MyRecord, f8), H5T_NATIVE_INT);
+//  H5Tinsert(datatype, "Field 9", HOFFSET(MyRecord, f9), H5T_NATIVE_DOUBLE);
 
 
   /// Playing around with memory layout of the datatype
@@ -270,14 +276,14 @@ void test_csv() {
 
   msg.AddField("Field 0", "_", "", &record.f0);
   msg.AddField("Field 1", "_", "", &record.f1);
-  msg.AddField("Field 2", "_", "", &record.f2);
-  msg.AddField("Field 3", "_", "", &record.f3);
-  msg.AddField("Field 4", "_", "", &record.f4);
-  msg.AddField("Field 5", "_", "", &record.f5);
-  msg.AddField("Field 6", "_", "", &record.f6);
-  msg.AddField("Field 7", "_", "", &record.f7);
-  msg.AddField("Field 8", "_", "", &record.f8);
-  msg.AddField("Field 9", "_", "", &record.f9);
+//  msg.AddField("Field 2", "_", "", &record.f2);
+//  msg.AddField("Field 3", "_", "", &record.f3);
+//  msg.AddField("Field 4", "_", "", &record.f4);
+//  msg.AddField("Field 5", "_", "", &record.f5);
+//  msg.AddField("Field 6", "_", "", &record.f6);
+//  msg.AddField("Field 7", "_", "", &record.f7);
+//  msg.AddField("Field 8", "_", "", &record.f8);
+//  msg.AddField("Field 9", "_", "", &record.f9);
 
   msg.AddCSVSerializer("essai.csv");
 
