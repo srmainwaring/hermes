@@ -17,7 +17,7 @@
 #include "H5PacketTable.h"
 
 #include "hermes/hermes.h"
-#include "hermes/ByteArray.h"
+#include "hermes/hdf5/ByteArray.h"
 
 #include "diemer/Timer.h"
 
@@ -122,9 +122,9 @@ void test_hdf5() {
 
   // Creating and initializing the packed buffer
   hermes::ByteArray buffer;
-  buffer.insert(_i);
-  buffer.insert(_d);
-  buffer.insert(_j);
+  buffer.insert<int>();
+  buffer.insert<double>();
+  buffer.insert<int>();
   buffer.allocate();
 
   /// Adding fields to the datatype

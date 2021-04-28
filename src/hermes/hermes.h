@@ -279,7 +279,7 @@ namespace hermes {
 #include "CSVSerializer.h"
 
 #ifdef USE_HDF5
-#include "HDF5Serializer.h"
+#include "hermes/hdf5/HDF5Serializer.h"
 #endif
 
 #ifdef HEMES_DEBUG

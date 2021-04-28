@@ -22,7 +22,7 @@ class ByteArray {
   }
 
   template<typename T>
-  void insert(T &val) {
+  void insert() {
     m_offsets.push_back(m_buffer_size);
     m_buffer_size += sizeof(T);
   }

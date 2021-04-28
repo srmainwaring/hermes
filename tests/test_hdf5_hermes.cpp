@@ -39,7 +39,7 @@ int main() {
 
   msg.AddField("_i", "_", "first integer", &data._i);
   msg.AddField("_d", "_", "a double", &data._d);
-  msg.AddField("_i", "_", "second integer", &data._j);
+  msg.AddField("_j", "_", "second integer", &data._j);
 
   msg.AddHDF5Serializer(h5file_id, "/");
 
