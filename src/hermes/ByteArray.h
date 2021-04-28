@@ -58,6 +58,10 @@ class ByteArray {
     return *reinterpret_cast<T *>(m_bytes + offset);
   }
 
+  size_t offset(std::size_t i) const {
+    return m_offsets[i];
+  }
+
  private:
   std::byte *m_bytes;
   std::size_t m_buffer_size;

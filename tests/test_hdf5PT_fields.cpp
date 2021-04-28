@@ -22,8 +22,8 @@
 #include "diemer/Timer.h"
 
 const int N = 1000000;
-const int FLUSH_PERIOD = 100;
-const int COMPRESSION_LEVEL = 1;
+const int FLUSH_PERIOD = 50;
+const int COMPRESSION_LEVEL = 0;
 
 struct HumanReadable {
   // https://en.cppreference.com/w/cpp/filesystem/directory_entry/file_size
@@ -41,15 +41,6 @@ struct HumanReadable {
     return i == 0 ? os : os << "B (" << hr.size << ')';
   }
 };
-
-
-/*
- * On fait le choix de ne pas reposer (le moins possible) sur des interfaces high-level
- * Ceci a but de performances
- * On utilise donc uniquement l'API C pure de HDF5, pas ses wrappers C++
- *
- */
-
 
 
 /*
@@ -101,28 +92,14 @@ struct HumanReadable {
 struct MyRecord {
   int f0;
   double f1;
-//  int f2;
-//  double f3;
-//  int f4;
-//  double f5;
-//  int f6;
-//  double f7;
-//  int f8;
-//  double f9;
+  int f2;
 };
 
 MyRecord get_random_record() {
   MyRecord record;
   record.f0 = rand() % 100;
   record.f1 = (double) rand() / RAND_MAX;
-//  record.f2 = rand() % 100;
-//  record.f3 = (double) rand() / RAND_MAX;
-//  record.f4 = rand() % 100;
-//  record.f5 = (double) rand() / RAND_MAX;
-//  record.f6 = rand() % 100;
-//  record.f7 = (double) rand() / RAND_MAX;
-//  record.f8 = rand() % 100;
-//  record.f9 = (double) rand() / RAND_MAX;
+  record.f2 = rand() % 100;
   return record;
 }
 
@@ -143,72 +120,19 @@ void test_hdf5() {
   double _d;
   int _j;
 
-  // Creating the buffer
+  // Creating and initializing the packed buffer
   ByteArray buffer;
-
   buffer.insert(_i);
   buffer.insert(_d);
   buffer.insert(_j);
   buffer.allocate();
-//  size_t size = 0;
-//  size += sizeof(_i);
-//  size += sizeof(_d);
-
-//  std::cout << buffer.size() << std::endl;
-
-  _i = 1;
-  _d = 3.14;
-  _j = 2;
-
-  buffer.reset();
-//  buffer << _i;
-//  buffer << _d;
-//  buffer << _j;
-//  buffer << _j;
-
-buffer << _i << _d << _j << _j;
-
-//  int _ii;
-//  double _dd;
-//  int _jj;
-
-//  buffer >> _ii >> _dd >> _jj;
-  std::cout << buffer.as<int>(0) << std::endl;
-  std::cout << buffer.as<double>(1) << std::endl;
-  std::cout << buffer.as<int>(2) << std::endl;
-
-
-  exit(0);
-
-  /// Create datatype to be used to write data in the Table and based on the struct MyRecord
-//  hid_t datatype = H5Tcreate(H5T_COMPOUND, sizeof(MyRecord));
-  hid_t datatype = H5Tcreate(H5T_COMPOUND, buffer.size());
 
   /// Adding fields to the datatype
-  size_t offset = 0;
-  H5Tinsert(datatype, "_i", offset, H5T_NATIVE_INT);
-  offset += sizeof(int);
-  H5Tinsert(datatype, "_d", offset, H5T_NATIVE_DOUBLE);
-  offset += sizeof(double);
-  H5Tinsert(datatype, "_j", offset, H5T_NATIVE_INT);
-  offset += sizeof(int);
-//  H5Tinsert(datatype, "Field 2", HOFFSET(MyRecord, f2), H5T_NATIVE_INT);
-//  H5Tinsert(datatype, "Field 3", HOFFSET(MyRecord, f3), H5T_NATIVE_DOUBLE);
-//  H5Tinsert(datatype, "Field 4", HOFFSET(MyRecord, f4), H5T_NATIVE_INT);
-//  H5Tinsert(datatype, "Field 5", HOFFSET(MyRecord, f5), H5T_NATIVE_DOUBLE);
-//  H5Tinsert(datatype, "Field 6", HOFFSET(MyRecord, f6), H5T_NATIVE_INT);
-//  H5Tinsert(datatype, "Field 7", HOFFSET(MyRecord, f7), H5T_NATIVE_DOUBLE);
-//  H5Tinsert(datatype, "Field 8", HOFFSET(MyRecord, f8), H5T_NATIVE_INT);
-//  H5Tinsert(datatype, "Field 9", HOFFSET(MyRecord, f9), H5T_NATIVE_DOUBLE);
 
-
-  /// Playing around with memory layout of the datatype
-//  std::cout << sizeof(MyRecord) << std::endl;
-//  std::cout << H5Tget_size(datatype) << std::endl;
-//  std::cout << H5Tget_size(H5T_NATIVE_INT) << std::endl;
-//  std::cout << H5Tget_size(H5T_NATIVE_DOUBLE) << std::endl;
-//  std::cout << H5Tget_size(H5T_NATIVE_INT) << std::endl;
-//  std::cout << HOFFSET (MyRecord, f3) << std::endl;
+  hid_t datatype = H5Tcreate(H5T_COMPOUND, buffer.size());
+  H5Tinsert(datatype, "_i", buffer.offset(0), H5T_NATIVE_INT);
+  H5Tinsert(datatype, "_d", buffer.offset(1), H5T_NATIVE_DOUBLE);
+  H5Tinsert(datatype, "_j", buffer.offset(2), H5T_NATIVE_INT);
 
 
   // TODO: gerer le fichier en SWMR de maniere a pouvoir reparer un fichier corrompu (crash programme sans H5Fclose)
@@ -241,7 +165,6 @@ buffer << _i << _d << _j << _j;
   hid_t table_loc_id = H5PTopen(file_id, "My Table");
 
 
-
   diemer::Timer<double> timer;
   timer.start();
 
@@ -249,40 +172,16 @@ buffer << _i << _d << _j << _j;
   int iflush = 1;
   while (i < N) {
 
-    /*
-     * FIXME:
-     * Remarques de performance
-     *
-     * Clairement, ouvrir et fermer les fichiers et tables resulte en une tres forte baisse de perf
-     * Par contre, si on ne le fait pas, on risque reellement en cas de crash d'obtenir un fichier corrompu
-     * Il faut donc proteger contre les crash
-     * Un flush a une certaine frequence, permet dans les tests effectues de pouvoir recuperer le fichier dans l'etat
-     * du dernier flush
-     */
-
-    /*
-     * FIXME:
-     * Pour etre utilisable sans modification de l'existant dans les codes, il convient de ne pas etre oblige de
-     * definir une structure supplementaire pour chaque message. On desire lors du Serialize pouvoir construire
-     * un array de bytes qui soit directement ajoutable au packet table !!!
-     * C'est de loin le plus complique ici !!!!!!!!!!
-     */
-
-    /// Building a new record
-//    auto record = get_random_record();
+    /// New data
     _i = rand() % 100;
     _d = (double) rand() / RAND_MAX;
     _j = rand() % 100;
 
+    /// Populating the buffer
     buffer.reset();
     buffer << _i;
     buffer << _d;
     buffer << _j;
-
-//    if (i == 0) {
-//      std::cout << _i << "\t" << buffer.as<int>(0) << std::endl;
-//      std::cout << _d << "\t" << buffer.as<double>(1) << std::endl;
-//    }
 
     /// Appending the record to the packet table
     err = H5PTappend(table_loc_id, 1, buffer.data());
@@ -319,17 +218,11 @@ buffer << _i << _d << _j << _j;
   timer.stop();
   std::cout << "HDF5 I/O took: "
             << timer() << " seconds for "
-            << N << " records composed of 10 fields of data "
+            << N << " records composed of 3 fields of data "
             << ", file size is "
             << HumanReadable{std::filesystem::file_size("essai.h5")}
             << "\t[COMPRESSION LEVEL: " << COMPRESSION_LEVEL << "]"
             << std::endl;
-
-
-  //  /// Closing the file
-//  err = H5Fclose(file_id);
-//  if (err < 0)
-//    fprintf(stderr, "Failed to close file.\n");
 
 }
 
@@ -340,14 +233,7 @@ void test_csv() {
 
   msg.AddField<int>("Field 0", "_", "", &record.f0);
   msg.AddField<double>("Field 1", "_", "", &record.f1);
-//  msg.AddField("Field 2", "_", "", &record.f2);
-//  msg.AddField("Field 3", "_", "", &record.f3);
-//  msg.AddField("Field 4", "_", "", &record.f4);
-//  msg.AddField("Field 5", "_", "", &record.f5);
-//  msg.AddField("Field 6", "_", "", &record.f6);
-//  msg.AddField("Field 7", "_", "", &record.f7);
-//  msg.AddField("Field 8", "_", "", &record.f8);
-//  msg.AddField("Field 9", "_", "", &record.f9);
+  msg.AddField("Field 2", "_", "", &record.f2);
 
   msg.AddCSVSerializer("essai.csv");
 
@@ -382,7 +268,7 @@ void test_csv() {
   timer.stop();
   std::cout << "CSV  I/O took: "
             << timer() << " seconds for "
-            << N << " records composed of 10 fields of data"
+            << N << " records composed of 3 fields of data"
             << ", file size is "
             << HumanReadable{std::filesystem::file_size("essai.csv")}
             << std::endl;
