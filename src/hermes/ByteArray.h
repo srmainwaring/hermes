@@ -14,7 +14,7 @@
 class ByteArray {
 
  public:
-  ByteArray() : m_bytes(nullptr), m_buffer_size(0), c_offset(0) {}
+  ByteArray() : m_bytes(nullptr), m_buffer_size(0), m_next(0) {}
 
   ~ByteArray() {
     m_offsets.clear();
@@ -36,7 +36,7 @@ class ByteArray {
   }
 
   void reset() {
-    c_offset = 0;
+    m_next = 0;
   }
 
   std::byte *data() {
@@ -45,9 +45,9 @@ class ByteArray {
 
   template<typename T>
   ByteArray &operator<<(T &val) {
-    std::size_t elt_s = sizeof(T);
-    memcpy(m_bytes + c_offset, &val, elt_s);
-    c_offset += elt_s;
+    assert(("Buffer is full and should be reset", m_next != m_offsets.size()));
+    memcpy(m_bytes + m_offsets[m_next], &val, sizeof(T));
+    m_next +=1;
     return *this;
   }
 
@@ -63,9 +63,8 @@ class ByteArray {
   std::size_t m_buffer_size;
   std::vector<std::size_t> m_offsets; // offset, type size
 
-  std::size_t c_offset;
+  std::size_t m_next;
 
-//  std::size_t m_offset;
 };
 
 

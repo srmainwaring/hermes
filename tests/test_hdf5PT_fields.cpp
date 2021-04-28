@@ -161,10 +161,12 @@ void test_hdf5() {
   _j = 2;
 
   buffer.reset();
-  buffer << _i;
-  buffer << _d;
-  buffer << _j;
+//  buffer << _i;
+//  buffer << _d;
 //  buffer << _j;
+//  buffer << _j;
+
+buffer << _i << _d << _j << _j;
 
 //  int _ii;
 //  double _dd;
