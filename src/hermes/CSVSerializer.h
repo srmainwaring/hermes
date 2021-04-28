@@ -178,9 +178,7 @@ class CSVSerializer : public Serializer {
   }
 
   void Serialize(const Message *msg) override {
-    if (!m_is_initialized) {
-      Initialize(msg);
-    }
+    assert(m_is_initialized);
     msg->ApplyVisitor(m_serializeVisitor);
     fmt::format_to(m_buffer, "\n");
   }

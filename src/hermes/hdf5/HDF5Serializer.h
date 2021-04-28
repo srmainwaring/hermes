@@ -132,45 +132,56 @@ class HDF5Serializer : public Serializer {
     explicit SerializeVisitor(HDF5Serializer *serializer) : SerializationVisitor<HDF5Serializer>(serializer) {}
 
     void visit(const Field<int> *field) override {
-      // TODO
+      auto val = field->GetData();
+      m_serializer->m_buffer << val;
     }
 
     void visit(const Field<float> *field) override {
-      // TODO
+      auto val = field->GetData();
+      m_serializer->m_buffer << val;
     }
 
     void visit(const Field<double> *field) override {
-      // TODO
+      auto val = field->GetData();
+      m_serializer->m_buffer << val;
     }
 
     void visit(const Field<bool> *field) override {
       // TODO
+      assert(false);
     }
 
     void visit(const Field<std::string> *field) override {
       // TODO
+      assert(false);
     }
 
     void visit(const Field<Eigen::Matrix<double, 3, 1>> *field) override {
       // TODO
+      assert(false);
     }
 
     void visit(const Field<std::vector<double>> *field) override {
       // TODO
+      assert(false);
     }
 
     void visit(const Field<std::function<double()>> *field) {
       // TODO
+      assert(false);
     }
 
   };
 
  public:
+  // TODO: voir a exposer chunk_size et compression_level pour avoir un controle global
   HDF5Serializer(hid_t HDF5File, std::string HDF5Group) :
       m_serializeVisitor(this),
-      m_HDF5File(HDF5File),
+      m_hdf5_file_id(HDF5File),
       m_HDF5Group(HDF5Group),
-      m_is_initialized(false) {}
+      m_is_initialized(false),
+      m_chunk_size(100),
+      m_compression_level(0) {}
 
   void Initialize(const Message *msg) override {
     if (!m_is_initialized) {
@@ -194,53 +205,45 @@ class HDF5Serializer : public Serializer {
       HDF5CompoundInitVisitor hdf5_compound_init_visitor(this);
       msg->ApplyVisitor(hdf5_compound_init_visitor);
 
-
-
-      // Buffer initialization (inserting fields and memory allocation)
-      // TODO
-
-      // HDF5 datatype creation
-      // TODO
-
-      // Verification that the group exists and if not, create it (recursively)
-      // TODO
-
-      // HDF5 Packet table creation
-      // TODO
-
-
-
-
-
+      // Creating the packet table into the file
+      m_table_id = H5PTcreate_fl(m_hdf5_file_id, msg->GetName().c_str(), m_hdf5_compound_dtype,
+                                 m_chunk_size, m_compression_level);
 
       m_is_initialized = true;
     }
   }
 
   void Serialize(const Message *msg) override {
-    // TODO
-  }
-
-  void Finalize(const Message *msg) override {
-    // TODO
+    msg->ApplyVisitor(m_serializeVisitor);
+    m_buffer.reset();
+    // TODO: voir a etre capable s'etendre le buffer au besoin pour un flush periodique niveau ByteArray
   }
 
   void Send(const Message *msg) override {
-    // TODO
+    /// Appending the record to the packet table
+    herr_t err = H5PTappend(m_table_id, 1, m_buffer.data());
+    if (err < 0)
+      fprintf(stderr, "Error adding record.");
+  }
+
+  void Finalize(const Message *msg) override {
+    H5PTclose(m_table_id);
   }
 
  private:
-  hid_t m_HDF5File;
+  hid_t m_hdf5_file_id;
   std::string m_HDF5Group;
 
   SerializeVisitor m_serializeVisitor;
 
   bool m_is_initialized;
 
+  hsize_t m_chunk_size;
+  int m_compression_level;
 
   ByteArray m_buffer;
   hid_t m_hdf5_compound_dtype;
-
+  hid_t m_table_id;
 
 };
 

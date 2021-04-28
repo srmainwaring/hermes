@@ -51,7 +51,6 @@ class ByteArray {
     return *this;
   }
 
-
   template<typename T>
   T &as(std::size_t i) const {
     size_t offset = m_offsets[i];
@@ -70,6 +69,5 @@ class ByteArray {
   std::size_t m_next;
 
 };
-
 
 #endif //HERMES_BYTEARRAY_H
