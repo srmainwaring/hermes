@@ -2,9 +2,11 @@
 // Created by frongere on 27/04/2021.
 //
 
-//#include <memory>
+#include <utility>
 //#include <array>
 #include <vector>
+#include <cassert>
+//#include <>
 #include <cstddef>
 #include <iostream>
 #include <cstring>
@@ -24,19 +26,53 @@
  */
 
 
+class ByteArray {
 
+ public:
+  ByteArray() : m_bytes(nullptr), m_buffer_size(0), m_offset(0) {}
+
+  ~ByteArray() {
+    free(m_bytes);
+  }
+
+  void reserve(const size_t &n) {
+    m_buffer_size = n;
+    m_bytes = static_cast<std::byte *>(malloc(n));
+  }
+
+  std::byte* get() {
+    return m_bytes;
+  }
+
+  template <typename T>
+  ByteArray& operator<<(T&val) {
+    std::size_t elt_s = sizeof(T);
+    memcpy(m_bytes + m_offset, &val, elt_s);
+    m_elements.emplace_back(std::pair{m_offset, elt_s});
+    m_offset += elt_s;
+    return *this;
+  }
+
+  template <typename T>
+  T& as(std::size_t i) const {
+    auto elt = m_elements[i];
+    std::size_t offset = elt.first;
+    assert(elt.second == sizeof(T));
+    return *reinterpret_cast<T *>(m_bytes + offset);
+  }
+
+ private:
+  std::byte *m_bytes;
+  std::size_t m_buffer_size;
+  std::size_t m_offset;
+  std::vector<std::pair<std::size_t, std::size_t>> m_elements;
+};
 
 
 /// Copying byte by byte the value into the buffer
 template<typename T>
-void push_back(std::byte *buffer, std::size_t &pos, const T &value) {
+void push_back(std::byte *buffer, size_t &pos, const T &value) {
   memcpy(buffer + pos, &value, sizeof(T));
-
-//  std::size_t k = pos;
-//  for (; k < pos + sizeof(T); ++k) {
-//    buffer[k] = ((std::byte *) (&value))[k];
-//  }
-//  pos = k;
   pos += sizeof(T);
 }
 
@@ -51,42 +87,36 @@ int main() {
 
   std::byte buffer[size];
 
-//  std::cout << buffer << std::endl;
-
   // Fill the buffer with an int and a double
   std::size_t pos = 0;
   push_back(buffer, pos, i);
-
-  std::cout << pos << std::endl;
-
   push_back(buffer, pos, d);
 
-  std::cout << pos << std::endl;
-  std::cout << std::endl;
-
-  // Reading i
-  int ir = 0;
-//  int *pir = &ir;
-
-  std::cout << ir << std::endl;
 
   std::size_t offset = 0;
 
-  ir = *reinterpret_cast<int*>(buffer + offset);
+  // Reading i
+  int ir = *reinterpret_cast<int *>(buffer + offset);
   offset += sizeof(int);
-
-//  std::cout << &buffer[0] << std::endl;
-//  std::cout << *pir << std::endl;
-//  std::cout << std::endl;
+//  std::cout << ir << std::endl;
 
   // Reading d
-  double dr = 0.;
-//  double *pdr = &dr;
+  double dr = *reinterpret_cast<double *>(buffer + offset);
+  offset += sizeof(double);
+//  std::cout << dr << std::endl;
 
-  std::cout << dr << std::endl;
-  dr = *reinterpret_cast<double *>(buffer + offset);
-  std::cout << &buffer[sizeof(int)] << std::endl;
-  std::cout << dr << std::endl;
+
+
+
+
+  ByteArray buff;
+  buff.reserve(size);
+
+  buff << i << d;
+
+  std::cout << buff.as<int>(0) << std::endl;
+  std::cout << buff.as<double>(1) << std::endl;
+
 
 
   return 0;

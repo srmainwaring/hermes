@@ -17,6 +17,8 @@
 #include "H5PacketTable.h"
 
 #include "hermes/hermes.h"
+#include "hermes/ByteArray.h"
+
 #include "diemer/Timer.h"
 
 const int N = 1000000;
@@ -136,13 +138,25 @@ void test_hdf5() {
    *
    */
 
+  // Data
+  int _i;
+  double _d;
+
+  // Determining
+  size_t size = 0;
+  size += sizeof(_i);
+  size += sizeof(_d);
 
   /// Create datatype to be used to write data in the Table and based on the struct MyRecord
-  hid_t datatype = H5Tcreate(H5T_COMPOUND, sizeof(MyRecord));
+//  hid_t datatype = H5Tcreate(H5T_COMPOUND, sizeof(MyRecord));
+  hid_t datatype = H5Tcreate(H5T_COMPOUND, size);
 
   /// Adding fields to the datatype
-  H5Tinsert(datatype, "Field 0", HOFFSET(MyRecord, f0), H5T_NATIVE_INT);
-  H5Tinsert(datatype, "Field 1", HOFFSET(MyRecord, f1), H5T_NATIVE_DOUBLE);
+  size_t offset = 0;
+  H5Tinsert(datatype, "Field 0", offset, H5T_NATIVE_INT);
+  offset += sizeof(int);
+  H5Tinsert(datatype, "Field 1", offset, H5T_NATIVE_DOUBLE);
+  offset += sizeof(double);
 //  H5Tinsert(datatype, "Field 2", HOFFSET(MyRecord, f2), H5T_NATIVE_INT);
 //  H5Tinsert(datatype, "Field 3", HOFFSET(MyRecord, f3), H5T_NATIVE_DOUBLE);
 //  H5Tinsert(datatype, "Field 4", HOFFSET(MyRecord, f4), H5T_NATIVE_INT);
@@ -156,9 +170,9 @@ void test_hdf5() {
   /// Playing around with memory layout of the datatype
 //  std::cout << sizeof(MyRecord) << std::endl;
 //  std::cout << H5Tget_size(datatype) << std::endl;
-  std::cout << H5Tget_size(H5T_NATIVE_INT) << std::endl;
-  std::cout << H5Tget_size(H5T_NATIVE_DOUBLE) << std::endl;
-  std::cout << H5Tget_size(H5T_NATIVE_INT) << std::endl;
+//  std::cout << H5Tget_size(H5T_NATIVE_INT) << std::endl;
+//  std::cout << H5Tget_size(H5T_NATIVE_DOUBLE) << std::endl;
+//  std::cout << H5Tget_size(H5T_NATIVE_INT) << std::endl;
 //  std::cout << HOFFSET (MyRecord, f3) << std::endl;
 
 
@@ -218,10 +232,22 @@ void test_hdf5() {
      */
 
     /// Building a new record
-    auto record = get_random_record();
+//    auto record = get_random_record();
+    _i = rand() % 100;
+    _d = (double) rand() / RAND_MAX;
+
+    ByteArray buffer;
+    buffer.reserve(size);
+    buffer << _i;
+    buffer << _d;
+
+//    if (i == 0) {
+//      std::cout << _i << "\t" << buffer.as<int>(0) << std::endl;
+//      std::cout << _d << "\t" << buffer.as<double>(1) << std::endl;
+//    }
 
     /// Appending the record to the packet table
-    err = H5PTappend(table_loc_id, 1, &record);
+    err = H5PTappend(table_loc_id, 1, buffer.get());
     if (err < 0)
       fprintf(stderr, "Error adding record.");
 
@@ -330,7 +356,6 @@ int main() {
   test_hdf5();
 
   test_csv();
-
 
   return 0;
 };
