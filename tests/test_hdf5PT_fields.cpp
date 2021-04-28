@@ -274,8 +274,8 @@ void test_csv() {
 
   auto record = get_random_record();
 
-  msg.AddField("Field 0", "_", "", &record.f0);
-  msg.AddField("Field 1", "_", "", &record.f1);
+  msg.AddField<int>("Field 0", "_", "", &record.f0);
+  msg.AddField<double>("Field 1", "_", "", &record.f1);
 //  msg.AddField("Field 2", "_", "", &record.f2);
 //  msg.AddField("Field 3", "_", "", &record.f3);
 //  msg.AddField("Field 4", "_", "", &record.f4);

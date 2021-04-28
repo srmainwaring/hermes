@@ -7,6 +7,7 @@
 #include <vector>
 #include <cstddef>
 #include <iostream>
+#include <cstring>
 
 #include "H5PacketTable.h"
 
@@ -22,11 +23,21 @@
  *
  */
 
-template <typename T>
-void push_back(std::vector<std::byte> &buffer, const T& value) {
-  for (std::size_t k = 0; k < sizeof(int); ++k) {
-    buffer.push_back(((std::byte*)(&value))[k]);
-  }
+
+
+
+
+/// Copying byte by byte the value into the buffer
+template<typename T>
+void push_back(std::byte *buffer, std::size_t &pos, const T &value) {
+  memcpy(buffer + pos, &value, sizeof(T));
+
+//  std::size_t k = pos;
+//  for (; k < pos + sizeof(T); ++k) {
+//    buffer[k] = ((std::byte *) (&value))[k];
+//  }
+//  pos = k;
+  pos += sizeof(T);
 }
 
 
@@ -36,24 +47,46 @@ int main() {
   double d = 3.14;
 
   // precompute buffer size
-  std::size_t size = sizeof(int) + sizeof(double);
+  const std::size_t size = sizeof(int) + sizeof(double);
 
-  std::vector<std::byte> buffer;
-  buffer.reserve(size);
+  std::byte buffer[size];
 
-  push_back(buffer, i);
-  push_back(buffer, d);
+//  std::cout << buffer << std::endl;
 
-//  for (std::size_t k = 0; k < sizeof(int); ++k) {
-//    buffer.push_back(((std::byte*)(&i))[k]);
-//  }
-//
-//  for (std::size_t k = 0; k < sizeof(double); ++k) {
-//    buffer.push_back(((std::byte*)(&d))[k]);
-//  }
+  // Fill the buffer with an int and a double
+  std::size_t pos = 0;
+  push_back(buffer, pos, i);
 
-//  std::cout << buffer.size() << std::endl;
+  std::cout << pos << std::endl;
 
+  push_back(buffer, pos, d);
+
+  std::cout << pos << std::endl;
+  std::cout << std::endl;
+
+  // Reading i
+  int ir = 0;
+//  int *pir = &ir;
+
+  std::cout << ir << std::endl;
+
+  std::size_t offset = 0;
+
+  ir = *reinterpret_cast<int*>(buffer + offset);
+  offset += sizeof(int);
+
+//  std::cout << &buffer[0] << std::endl;
+//  std::cout << *pir << std::endl;
+//  std::cout << std::endl;
+
+  // Reading d
+  double dr = 0.;
+//  double *pdr = &dr;
+
+  std::cout << dr << std::endl;
+  dr = *reinterpret_cast<double *>(buffer + offset);
+  std::cout << &buffer[sizeof(int)] << std::endl;
+  std::cout << dr << std::endl;
 
 
   return 0;
