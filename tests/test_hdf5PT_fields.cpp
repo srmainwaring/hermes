@@ -141,22 +141,55 @@ void test_hdf5() {
   // Data
   int _i;
   double _d;
+  int _j;
 
-  // Determining
-  size_t size = 0;
-  size += sizeof(_i);
-  size += sizeof(_d);
+  // Creating the buffer
+  ByteArray buffer;
+
+  buffer.insert(_i);
+  buffer.insert(_d);
+  buffer.insert(_j);
+  buffer.allocate();
+//  size_t size = 0;
+//  size += sizeof(_i);
+//  size += sizeof(_d);
+
+//  std::cout << buffer.size() << std::endl;
+
+  _i = 1;
+  _d = 3.14;
+  _j = 2;
+
+  buffer.reset();
+  buffer << _i;
+  buffer << _d;
+  buffer << _j;
+//  buffer << _j;
+
+//  int _ii;
+//  double _dd;
+//  int _jj;
+
+//  buffer >> _ii >> _dd >> _jj;
+  std::cout << buffer.as<int>(0) << std::endl;
+  std::cout << buffer.as<double>(1) << std::endl;
+  std::cout << buffer.as<int>(2) << std::endl;
+
+
+  exit(0);
 
   /// Create datatype to be used to write data in the Table and based on the struct MyRecord
 //  hid_t datatype = H5Tcreate(H5T_COMPOUND, sizeof(MyRecord));
-  hid_t datatype = H5Tcreate(H5T_COMPOUND, size);
+  hid_t datatype = H5Tcreate(H5T_COMPOUND, buffer.size());
 
   /// Adding fields to the datatype
   size_t offset = 0;
-  H5Tinsert(datatype, "Field 0", offset, H5T_NATIVE_INT);
+  H5Tinsert(datatype, "_i", offset, H5T_NATIVE_INT);
   offset += sizeof(int);
-  H5Tinsert(datatype, "Field 1", offset, H5T_NATIVE_DOUBLE);
+  H5Tinsert(datatype, "_d", offset, H5T_NATIVE_DOUBLE);
   offset += sizeof(double);
+  H5Tinsert(datatype, "_j", offset, H5T_NATIVE_INT);
+  offset += sizeof(int);
 //  H5Tinsert(datatype, "Field 2", HOFFSET(MyRecord, f2), H5T_NATIVE_INT);
 //  H5Tinsert(datatype, "Field 3", HOFFSET(MyRecord, f3), H5T_NATIVE_DOUBLE);
 //  H5Tinsert(datatype, "Field 4", HOFFSET(MyRecord, f4), H5T_NATIVE_INT);
@@ -205,6 +238,8 @@ void test_hdf5() {
   file_id = H5Fopen("essai.h5", H5F_ACC_RDWR, H5P_DEFAULT);
   hid_t table_loc_id = H5PTopen(file_id, "My Table");
 
+
+
   diemer::Timer<double> timer;
   timer.start();
 
@@ -235,11 +270,12 @@ void test_hdf5() {
 //    auto record = get_random_record();
     _i = rand() % 100;
     _d = (double) rand() / RAND_MAX;
+    _j = rand() % 100;
 
-    ByteArray buffer;
-    buffer.reserve(size);
+    buffer.reset();
     buffer << _i;
     buffer << _d;
+    buffer << _j;
 
 //    if (i == 0) {
 //      std::cout << _i << "\t" << buffer.as<int>(0) << std::endl;
@@ -247,7 +283,7 @@ void test_hdf5() {
 //    }
 
     /// Appending the record to the packet table
-    err = H5PTappend(table_loc_id, 1, buffer.get());
+    err = H5PTappend(table_loc_id, 1, buffer.data());
     if (err < 0)
       fprintf(stderr, "Error adding record.");
 
