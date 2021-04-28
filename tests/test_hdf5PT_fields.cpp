@@ -121,7 +121,7 @@ void test_hdf5() {
   int _j;
 
   // Creating and initializing the packed buffer
-  ByteArray buffer;
+  hermes::ByteArray buffer;
   buffer.insert(_i);
   buffer.insert(_d);
   buffer.insert(_j);
@@ -229,7 +229,7 @@ void test_hdf5() {
 void test_csv() {
   hermes::Message msg("essai", "");
 
-  auto record = get_random_record();
+  MyRecord record;
 
   msg.AddField<int>("Field 0", "_", "", &record.f0);
   msg.AddField<double>("Field 1", "_", "", &record.f1);

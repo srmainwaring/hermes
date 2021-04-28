@@ -19,6 +19,9 @@
 
 #include "Eigen/Dense"
 
+#ifdef USE_HDF5
+#include "hdf5.h"
+#endif
 
 namespace hermes {
 
@@ -104,11 +107,15 @@ namespace hermes {
 
   };
 
+  #ifdef HERMES_DEBUG
   class PrintSerializer;
+  #endif
 
   class CSVSerializer;
 
+  #ifdef USE_HDF5
   class HDF5Serializer;
+  #endif
 
   /*
    * The message class that enclose a vector of fields.
@@ -173,12 +180,14 @@ namespace hermes {
       return m_serializers[m_serializers.size() - 1].get();
     }
 
+    #ifdef HERMES_DEBUG
     PrintSerializer *AddPrintSerializer();
+    #endif
 
     CSVSerializer *AddCSVSerializer(std::string CSVFile);
 
     #ifdef USE_HDF5
-    HDF5Serializer *AddHDF5Serializer(std::string HDF5File, std::string HDF5Group);
+    HDF5Serializer *AddHDF5Serializer(hid_t hdf5_file_id, std::string HDF5Group);
     #endif
 
 
@@ -263,7 +272,9 @@ namespace hermes {
     explicit SerializationVisitor(C *serializer) : m_serializer(serializer) {}
   };
 
+#ifdef HERMES_DEBUG
 #include "PrintSerializer.h"
+#endif
 
 #include "CSVSerializer.h"
 
@@ -271,22 +282,24 @@ namespace hermes {
 #include "HDF5Serializer.h"
 #endif
 
+#ifdef HEMES_DEBUG
   inline PrintSerializer *Message::AddPrintSerializer() {
     auto *printSerializer = AddSerializer(new PrintSerializer());
     return dynamic_cast<PrintSerializer *>(printSerializer);
   }
+#endif
 
   inline CSVSerializer *Message::AddCSVSerializer(std::string CSVFile) {
     auto *csvSerializer = AddSerializer(new CSVSerializer(CSVFile));
     return dynamic_cast<CSVSerializer *>(csvSerializer);
   }
 
-  #ifdef USE_HDF5
-  inline HDF5Serializer *Message::AddHDF5Serializer(std::string HDF5File, std::string HDF5Group) {
-    auto hdf5Serializer = AddSerializer(new HDF5Serializer(HDF5File, HDF5Group));
-    return dynamic_cast<HDF5Serializer*>(hdf5Serializer);
+#ifdef USE_HDF5
+  inline HDF5Serializer *Message::AddHDF5Serializer(hid_t hdf5_file_id, std::string HDF5Group) {
+    auto *hdf5Serializer = AddSerializer(new HDF5Serializer(hdf5_file_id, HDF5Group));
+    return dynamic_cast<HDF5Serializer *>(hdf5Serializer);
   }
-  #endif
+#endif
 
 }  // end namespace hermes
 

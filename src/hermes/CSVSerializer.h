@@ -142,7 +142,11 @@ class CSVSerializer : public Serializer {
 
  public:
 
-  explicit CSVSerializer(std::string CSVFile) : m_serializeVisitor(this), m_CSVFile(CSVFile) {}
+  explicit CSVSerializer(std::string CSVFile) :
+      m_serializeVisitor(this),
+      m_CSVFile(CSVFile),
+      m_is_initialized(false),
+      m_delimiter(";") {}
 
   void SetDelimiter(const std::string &delimiter) { m_delimiter = delimiter; }
 
@@ -192,7 +196,7 @@ class CSVSerializer : public Serializer {
 
  private:
 
-  std::string m_delimiter = ";";
+  std::string m_delimiter;
 
   fmt::memory_buffer m_buffer;
 
@@ -201,7 +205,7 @@ class CSVSerializer : public Serializer {
   std::string m_CSVFile;
   std::ofstream m_file;
 
-  bool m_is_initialized = false;
+  bool m_is_initialized;
 
 };
 
