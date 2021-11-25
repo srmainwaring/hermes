@@ -14,11 +14,11 @@
 class ByteArray {
 
  public:
-  ByteArray() : m_bytes(nullptr), m_buffer_size(0), m_next(0) {}
+  ByteArray() : m_data(nullptr), m_buffer_size(0), m_next(0) {}
 
   ~ByteArray() {
     m_offsets.clear();
-    free(m_bytes);
+    free(m_data);
   }
 
   template<typename T>
@@ -28,7 +28,7 @@ class ByteArray {
   }
 
   void allocate() {
-    m_bytes = static_cast<std::byte *>(malloc(m_buffer_size));
+    m_data = static_cast<std::byte *>(malloc(m_buffer_size));
   }
 
   size_t size() const {
@@ -40,13 +40,13 @@ class ByteArray {
   }
 
   std::byte *data() {
-    return m_bytes;
+    return m_data;
   }
 
   template<typename T>
   ByteArray &operator<<(T &val) {
     assert(("Buffer is full and should be reset", m_next != m_offsets.size()));
-    memcpy(m_bytes + m_offsets[m_next], &val, sizeof(T));
+    memcpy(m_data + m_offsets[m_next], &val, sizeof(T));
     m_next +=1;
     return *this;
   }
@@ -54,7 +54,7 @@ class ByteArray {
   template<typename T>
   T &as(std::size_t i) const {
     size_t offset = m_offsets[i];
-    return *reinterpret_cast<T *>(m_bytes + offset);
+    return *reinterpret_cast<T *>(m_data + offset);
   }
 
   size_t offset(std::size_t i) const {
@@ -62,12 +62,10 @@ class ByteArray {
   }
 
  private:
-  std::byte *m_bytes;
+  std::byte *m_data;
   std::size_t m_buffer_size;
   std::vector<std::size_t> m_offsets; // offset, type size
-
   std::size_t m_next;
-
 };
 
 #endif //HERMES_BYTEARRAY_H

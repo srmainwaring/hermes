@@ -9,20 +9,6 @@
 
 #include "ByteArray.h"
 
-
-//// TODO: mettre dans un header dedie
-//using h5_id = hid_t;
-//class HDF5File {
-// public:
-//  HDF5File(const std::string filename) : m_filename(filename) {
-//
-//  }
-// private:
-//  std::string m_filename;
-//  h5_id m_file_id;
-//};
-
-
 class HDF5Serializer : public Serializer {
 
  private:
@@ -244,6 +230,8 @@ class HDF5Serializer : public Serializer {
   ByteArray m_buffer;
   hid_t m_hdf5_compound_dtype;
   hid_t m_table_id;
+
+  int m_nflush;
 
 };
 
