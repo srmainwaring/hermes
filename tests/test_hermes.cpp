@@ -23,7 +23,7 @@ int main() {
 
 
     m.AddField<int>("Nb", "m/s", "Un entier", &o.i);
-    m.AddField<double>("pi", "km", "Un double", &o.d, 6);
+    m.AddField<double>("pi", "km", "Un double", &o.d);
     m.AddField<std::string>("name", "--", "Une chaine", &o.str);
 
     Message m2("MSG2", "Un second message");
@@ -32,22 +32,13 @@ int main() {
     double d = -1.414;
     float f = 1.397e12;
 
-
-//    auto field_entier2 = m2.AddField<int>("entier2", "", "Second entier", &i);
-
-
     m2.AddField<double>("double2", "kk", "Second double", &d);
 
-
-//    m.AddField<Message>("message", "", "Second message", &m2);
-
     m.AddField<float>("float", "", "Un float", &f);
-
 
     // Adding two standard serializers
     CSVSerializer* csvSerializer = m.AddCSVSerializer("test_csv_serializer.csv");
     csvSerializer->SetDelimiter(" ; ");
-
 
     // Adding a vector
     std::vector<double> vector;
