@@ -481,14 +481,14 @@ namespace hermes {
 
       void visit(const Field<float> *field) override {
         int precision = field->precision();
-        precision = precision > 0 ? precision : 12;
-        fmt::format_to(m_serializer->m_buffer, "{:.{}g}{:s}", field->GetData(), precision, m_serializer->m_delimiter);
+        precision = precision > 0 ? precision : 5;
+        fmt::format_to(m_serializer->m_buffer, "{:.{}f}{:s}", field->GetData(), precision, m_serializer->m_delimiter);
       }
 
       void visit(const Field<double> *field) override {
         int precision = field->precision();
-        precision = precision > 0 ? precision : 12;
-        fmt::format_to(m_serializer->m_buffer, "{:.{}g}{:s}", field->GetData(), precision, m_serializer->m_delimiter);
+        precision = precision > 0 ? precision : 5;
+        fmt::format_to(m_serializer->m_buffer, "{:.{}f}{:s}", field->GetData(), precision, m_serializer->m_delimiter);
       }
 
       void visit(const Field<bool> *field) override {
@@ -501,9 +501,9 @@ namespace hermes {
 
       void visit(const Field<Eigen::Matrix<double, 3, 1>> *field) override {
         int precision = field->precision();
-        precision = precision > 0 ? precision : 12;
+        precision = precision > 0 ? precision : 5;
         auto vector = field->GetData();
-        fmt::format_to(m_serializer->m_buffer, "{:.{}g}{:s}{:.{}g}{:s}{:.{}g}{:s}",
+        fmt::format_to(m_serializer->m_buffer, "{:.{}f}{:s}{:.{}f}{:s}{:.{}f}{:s}",
                        vector[0], precision, m_serializer->m_delimiter,
                        vector[1], precision, m_serializer->m_delimiter,
                        vector[2], precision, m_serializer->m_delimiter
@@ -512,17 +512,17 @@ namespace hermes {
 
       void visit(const Field<std::vector<double>> *field) override {
         int precision = field->precision();
-        precision = precision > 0 ? precision : 12;
+        precision = precision > 0 ? precision : 5;
         auto vector = field->GetData();
         for (const auto &element: vector) {
-          fmt::format_to(m_serializer->m_buffer, "{:.{}g}{}", element, precision, m_serializer->m_delimiter);
+          fmt::format_to(m_serializer->m_buffer, "{:.{}f}{}", element, precision, m_serializer->m_delimiter);
         }
       }
 
       void visit(const Field<std::function<double()>> *field) {
         int precision = field->precision();
-        precision = precision > 0 ? precision : 12;
-        fmt::format_to(m_serializer->m_buffer, "{:.{}g}{:s}", (field->GetData())(), precision, m_serializer->m_delimiter);
+        precision = precision > 0 ? precision : 5;
+        fmt::format_to(m_serializer->m_buffer, "{:.{}f}{:s}", (field->GetData())(), precision, m_serializer->m_delimiter);
       }
 
     };
