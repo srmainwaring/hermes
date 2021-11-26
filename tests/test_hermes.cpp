@@ -23,7 +23,7 @@ int main() {
 
 
     m.AddField<int>("Nb", "m/s", "Un entier", &o.i);
-    m.AddField<double>("pi", "km", "Un double", &o.d);
+    m.AddField<double>("pi", "km", "Un double", &o.d, 6);
     m.AddField<std::string>("name", "--", "Une chaine", &o.str);
 
     Message m2("MSG2", "Un second message");
@@ -45,7 +45,7 @@ int main() {
 
 
     // Adding two standard serializers
-    CSVSerializer* csvSerializer = m.AddCSVSerializer("");
+    CSVSerializer* csvSerializer = m.AddCSVSerializer("test_csv_serializer.csv");
     csvSerializer->SetDelimiter(" ; ");
 
 
@@ -83,8 +83,6 @@ int main() {
         m.Serialize();
         m.Send();
     }
-
-
 
     return 0;
 

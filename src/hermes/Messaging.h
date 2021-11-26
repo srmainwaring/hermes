@@ -40,13 +40,15 @@ namespace hermes {
         std::string m_name = "";
         std::string m_unit = "";
         std::string m_description = "";
+    int m_precision = -1;
 
     public:
-        FieldBase(std::string name, std::string unit, std::string description) :
-                m_name(std::move(name)), m_unit(std::move(unit)), m_description(std::move(description)) {}
+    FieldBase(std::string name, std::string unit, std::string description, int precision) :
+        m_name(std::move(name)), m_unit(std::move(unit)), m_description(std::move(description)),
+        m_precision(precision) {}
 
-        FieldBase(std::string name, std::string description) :
-                FieldBase(std::move(name), "", std::move(description)) {}
+    FieldBase(std::string name, std::string description, int precision) :
+        FieldBase(std::move(name), "", std::move(description), precision) {}
 
         std::string GetName() const { return m_name; }
 
@@ -54,12 +56,14 @@ namespace hermes {
 
         std::string GetDescription() const { return m_description; }
 
+    int precision() const { return m_precision; }
+
         virtual void Accept(Visitor &visitor) const = 0;
 
     };
 
     /*
-     * Implementation class for Fields. It is templatged with the type of data it points to.
+   * Implementation class for Fields. It is templated with the type of data it points to.
      */
     template<class T>
     class Field : public FieldBase {
@@ -70,11 +74,11 @@ namespace hermes {
 
 
     public:
-        Field(std::string name, std::string unit, std::string description, T *data)
-                : m_getData([data]() { return *data;}), FieldBase(name, unit, description) {}
+    Field(std::string name, std::string unit, std::string description, T *data, int precision)
+        : m_getData([data]() { return *data; }), FieldBase(name, unit, description, precision) {}
 
-        Field(std::string name, std::string unit, std::string description, std::function<T()> data)
-                : m_getData([data]() { return data(); } ), FieldBase(name, unit, description) {}
+    Field(std::string name, std::string unit, std::string description, std::function<T()> data, int precision)
+        : m_getData([data]() { return data(); }), FieldBase(name, unit, description, precision) {}
 
         void Accept(Visitor &visitor) const override;
 
@@ -93,7 +97,7 @@ namespace hermes {
 
     public:
         virtual ~Serializer() {}
-
+        
         virtual void Initialize(const Message *msg) = 0;
 
         virtual void Serialize(const Message *msg) = 0;
@@ -130,7 +134,7 @@ namespace hermes {
 
         Message() = default;
 
-        Message(const std::string &name, const std::string &description) : m_name(name), m_description(description) {}
+    Message(const std::string &name, const std::string &description) : m_name(name), m_description(description) {}
 
         void SetName(std::string name) { m_name = name; }
 
@@ -146,16 +150,17 @@ namespace hermes {
         }
 
         template<class T>
-    void AddField(std::string name, std::string unit, std::string description,
-                  T *val) { // FIXME : pourquoi on renvoit le pointeur vers le champ ?
-            m_fields.emplace_back(std::make_unique<Field<T>>(name, unit, description, val));
+    void AddField(std::string name, std::string unit, std::string description, T *val, int precision = -1) {
+      // FIXME : pourquoi on renvoit le pointeur vers le champ ?
+      m_fields.emplace_back(std::make_unique<Field<T>>(name, unit, description, val, precision));
             m_mapper[name] = c_nbFields;
             c_nbFields++;
         }
 
         template <typename T>
-        void AddField(std::string name, std::string unit, std::string description, std::function<T()> func) {
-            m_fields.emplace_back(std::make_unique<Field<T>>(name, unit, description, func));
+    void
+    AddField(std::string name, std::string unit, std::string description, std::function<T()> func, int precision = -1) {
+      m_fields.emplace_back(std::make_unique<Field<T>>(name, unit, description, func, precision));
             m_mapper[name] = c_nbFields;
             c_nbFields++;
         }
@@ -335,11 +340,6 @@ namespace hermes {
         fmt::format_to(m_serializer->m_buffer, "{}\n", m_serializer->m_buffer.data());
             }
 
-//            void visit(const Field<Message> *field) override {
-//                auto msg = field->GetData();
-//                msg.ApplyVisitor(*this);
-//            }
-
             void visit(const Field<std::function<double (void)>> *field) override {
         fmt::format_to(m_serializer->m_buffer, "  * {:>10s} ({:^5s}) : {:.12g}\n",
                                         field->GetName(), field->GetUnit(), (field->GetData())());
@@ -424,7 +424,6 @@ namespace hermes {
         }
             }
 
-
             void visit(const Field<std::function<double ()>> *field) { visit((FieldBase *) field); }
 
 
@@ -477,11 +476,15 @@ namespace hermes {
             }
 
             void visit(const Field<float> *field) override {
-        fmt::format_to(m_serializer->m_buffer, "{:.12g}{:s}", field->GetData(), m_serializer->m_delimiter);
+        int precision = field->precision();
+        precision = precision > 0 ? precision : 5;
+        fmt::format_to(m_serializer->m_buffer, "{:.{}f}{:s}", field->GetData(), precision, m_serializer->m_delimiter);
             }
 
             void visit(const Field<double> *field) override {
-        fmt::format_to(m_serializer->m_buffer, "{:.12g}{:s}", field->GetData(), m_serializer->m_delimiter);
+        int precision = field->precision();
+        precision = precision > 0 ? precision : 5;
+        fmt::format_to(m_serializer->m_buffer, "{:.{}f}{:s}", field->GetData(), precision, m_serializer->m_delimiter);
             }
 
             void visit(const Field<bool> *field) override {
@@ -493,28 +496,32 @@ namespace hermes {
             }
 
             void visit(const Field<Eigen::Matrix<double, 3, 1>> *field) override {
+        int precision = field->precision();
+        precision = precision > 0 ? precision : 5;
                 auto vector = field->GetData();
-        fmt::format_to(m_serializer->m_buffer, "{:.12g}{:s}{:.12g}{:s}{:.12g}{:s}",
-                        vector[0], m_serializer->m_delimiter,
-                        vector[1], m_serializer->m_delimiter,
-                        vector[2], m_serializer->m_delimiter
+        fmt::format_to(m_serializer->m_buffer, "{:.{}f}{:s}{:.{}f}{:s}{:.{}f}{:s}",
+                       vector[0], precision, m_serializer->m_delimiter,
+                       vector[1], precision, m_serializer->m_delimiter,
+                       vector[2], precision, m_serializer->m_delimiter
                         );
       }
 
       void visit(const Field<std::vector<double>> *field) override {
+        int precision = field->precision();
+        precision = precision > 0 ? precision : 5;
         auto vector = field->GetData();
         for (const auto& element: vector) {
-          fmt::format_to(m_serializer->m_buffer, "{:.12g}{}", element, m_serializer->m_delimiter);
+          fmt::format_to(m_serializer->m_buffer, "{:.{}f}{}", element, precision, m_serializer->m_delimiter);
         }
             }
 
-
             void visit(const Field<std::function<double ()>> *field) {
-        fmt::format_to(m_serializer->m_buffer, "{:.12g}{:s}", (field->GetData())(), m_serializer->m_delimiter);
+        int precision = field->precision();
+        precision = precision > 0 ? precision : 5;
+        fmt::format_to(m_serializer->m_buffer, "{:.{}f}{:s}", (field->GetData())(), precision, m_serializer->m_delimiter);
             }
 
         };
-
 
         std::string GetCSVLine() {
             // Adding the final line break
