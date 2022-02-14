@@ -61,12 +61,12 @@ include(Add_Eigen3)
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 
 # Creating the library
-add_library(hermes)
+add_library(hermes INTERFACE)
 add_dependencies(hermes check_git_hermes) # For git_watcher to fetch git informations before effective build
 
 add_subdirectory(src)
 
-target_link_libraries(hermes fmt Eigen3::Eigen)
+target_link_libraries(hermes INTERFACE fmt Eigen3::Eigen)
 
 
 # Adding tests
