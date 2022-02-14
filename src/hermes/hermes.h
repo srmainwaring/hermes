@@ -176,9 +176,9 @@ namespace hermes {
       return m_serializers[m_serializers.size() - 1].get();
     }
 
-    CSVSerializer *AddCSVSerializer(std::string CSVFile);
+    inline CSVSerializer *AddCSVSerializer(std::string CSVFile);
 
-    PrintSerializer *AddPrintSerializer();
+    inline PrintSerializer *AddPrintSerializer();
 
 
     void ApplyVisitor(Visitor &visitor) const {
@@ -383,7 +383,7 @@ namespace hermes {
 
   };
 
-  PrintSerializer *Message::AddPrintSerializer() {
+  inline PrintSerializer *Message::AddPrintSerializer() {
     auto *printSerializer = AddSerializer(new PrintSerializer());
     return dynamic_cast<PrintSerializer *>(printSerializer);
   }
@@ -581,7 +581,7 @@ namespace hermes {
 
   };
 
-  CSVSerializer *Message::AddCSVSerializer(std::string CSVFile) {
+  inline CSVSerializer *Message::AddCSVSerializer(std::string CSVFile) {
     auto *csvSerializer = AddSerializer(new CSVSerializer(CSVFile));
     return dynamic_cast<CSVSerializer *>(csvSerializer);
   }
