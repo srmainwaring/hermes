@@ -117,7 +117,7 @@ namespace hermes {
    */
   class Message {
 
-   private:
+   protected:
     std::string m_name;
     std::string m_description;
 
@@ -199,13 +199,13 @@ namespace hermes {
       }
     }
 
-    void Finalize() const {
+    virtual void Finalize() const {
       for (const auto &serializer : m_serializers) {
         serializer->Finalize(this);
       }
     }
 
-    void Send() const {
+    virtual void Send() const {
       for (const auto &serializer : m_serializers) {
         serializer->Send(this);
       }
