@@ -19,7 +19,24 @@
 
 #include "Eigen/Dense"
 
-#define HERMES_MAX_LOG_LEVEL 5
+#define HERMES_MAX_LOG_LEVEL 4
+
+/**
+ * Concerning the log levels
+ *
+ * Log levels are integers between 0 and 4 (5 log level into hermes)
+
+ * Log levels can be optionally set on each field of a message while adding field to a message.
+ * By default, the log level of a field is set to 0.
+ *
+ * A log level can be set at the level of a message. By default the message log level is set to max 4.
+ * This means that every field is logged.
+ *
+ * Setting the message's log level eg to 2 means that only messages having a log level inferior or equal to 2 will be
+ * logged
+ *
+ */
+
 
 namespace hermes {
 
@@ -80,7 +97,6 @@ namespace hermes {
   class Field : public FieldBase {
 
    private:
-
     std::function<T()> m_getData;
 
 
@@ -91,7 +107,14 @@ namespace hermes {
           T *data,
           unsigned int precision,
           unsigned int log_level)
-        : m_getData([data]() { return *data; }), FieldBase(name, unit, description, precision, log_level) {}
+        : m_getData([data]() { return *data; }), FieldBase(name, unit, description, precision, log_level) {
+      if (log_level > HERMES_MAX_LOG_LEVEL) {
+        throw std::runtime_error("Maximum log level allowable in hermes is "
+                                 + std::to_string(HERMES_MAX_LOG_LEVEL)
+                                 + ". Requested is "
+                                 + std::to_string(log_level));
+      }
+    }
 
     Field(std::string name,
           std::string unit,
@@ -99,7 +122,14 @@ namespace hermes {
           std::function<T()> data,
           unsigned int precision,
           unsigned int log_level)
-        : m_getData([data]() { return data(); }), FieldBase(name, unit, description, precision, log_level) {}
+        : m_getData([data]() { return data(); }), FieldBase(name, unit, description, precision, log_level) {
+      if (log_level > HERMES_MAX_LOG_LEVEL) {
+        throw std::runtime_error("Maximum log level allowable in hermes is "
+                                 + std::to_string(HERMES_MAX_LOG_LEVEL)
+                                 + ". Requested is "
+                                 + std::to_string(log_level));
+      }
+    }
 
     void Accept(Visitor &visitor) const override;
 
@@ -159,7 +189,7 @@ namespace hermes {
     Message(const std::string &name, const std::string &description) :
         m_name(name),
         m_description(description),
-        m_log_level(0) {}
+        m_log_level(HERMES_MAX_LOG_LEVEL) {}
 
     void SetName(std::string name) { m_name = name; }
 
@@ -174,7 +204,15 @@ namespace hermes {
       m_description = description;
     }
 
-    void SetLogLevel(unsigned int log_level) { m_log_level = log_level; }
+    void SetLogLevel(unsigned int log_level) {
+      if (log_level > HERMES_MAX_LOG_LEVEL) {
+        throw std::runtime_error("Maximum log level allowable in hermes is "
+                                 + std::to_string(HERMES_MAX_LOG_LEVEL)
+                                 + ". Requested is "
+                                 + std::to_string(log_level));
+      }
+      m_log_level = log_level;
+    }
 
     unsigned int GetLogLevel() const { return m_log_level; }
 
@@ -184,7 +222,7 @@ namespace hermes {
                   std::string description,
                   T *val,
                   unsigned int precision = 5,
-                  bool log_level = HERMES_MAX_LOG_LEVEL) {
+                  unsigned int log_level = 0) {
       m_fields.emplace_back(std::make_unique<Field<T>>(name, unit, description, val, precision, log_level));
       m_mapper[name] = c_nbFields;
       c_nbFields++;
@@ -196,7 +234,7 @@ namespace hermes {
                   std::string description,
                   std::function<T()> func,
                   unsigned int precision = 5,
-                  bool log_level = HERMES_MAX_LOG_LEVEL) {
+                  unsigned int log_level = 0) {
       m_fields.emplace_back(std::make_unique<Field<T>>(name, unit, description, func, precision, log_level));
       m_mapper[name] = c_nbFields;
       c_nbFields++;
@@ -336,17 +374,17 @@ namespace hermes {
       explicit SerializeVisitor(PrintSerializer *serializer) :
           SerializationVisitor<PrintSerializer>(serializer) {}
 
-      void visit(const Field<int> *field) override {  // TODO: parametrer les formats...
+      void visit(const Field<int> *field) override {
         fmt::format_to(m_serializer->m_buffer, "  * {:>10s} ({:^5s}) : {:d}\n",
                        field->GetName(), field->GetUnit(), field->GetData());
       }
 
-      void visit(const Field<float> *field) override {  // TODO: parametrer les formats...
+      void visit(const Field<float> *field) override {
         fmt::format_to(m_serializer->m_buffer, "  * {:>10s} ({:^5s}) : {:.12g}\n",
                        field->GetName(), field->GetUnit(), field->GetData());
       }
 
-      void visit(const Field<double> *field) override {  // TODO: parametrer les formats...
+      void visit(const Field<double> *field) override {
         fmt::format_to(m_serializer->m_buffer, "  * {:>10s} ({:^5s}) : {:.12g}\n",
                        field->GetName(), field->GetUnit(), field->GetData());
       }
