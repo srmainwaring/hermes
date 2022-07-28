@@ -19,6 +19,7 @@
 
 #include "Eigen/Dense"
 
+#define HERMES_MAX_LOG_LEVEL 5
 
 namespace hermes {
 
@@ -37,12 +38,19 @@ namespace hermes {
   class FieldBase {
 
    public:
-    FieldBase(std::string name, std::string unit, std::string description, unsigned int precision) :
-        m_name(std::move(name)), m_unit(std::move(unit)), m_description(std::move(description)),
-        m_precision(precision) {}
+    FieldBase(std::string name,
+              std::string unit,
+              std::string description,
+              unsigned int precision,
+              unsigned int log_level) :
+        m_name(std::move(name)),
+        m_unit(std::move(unit)),
+        m_description(std::move(description)),
+        m_precision(precision),
+        m_log_level(log_level) {}
 
-    FieldBase(std::string name, std::string description, unsigned int precision) :
-        FieldBase(std::move(name), "", std::move(description), precision) {}
+    FieldBase(std::string name, std::string description, unsigned int precision, unsigned int log_level) :
+        FieldBase(std::move(name), "", std::move(description), precision, log_level) {}
 
     std::string GetName() const { return m_name; }
 
@@ -52,6 +60,8 @@ namespace hermes {
 
     unsigned int precision() const { return m_precision; }
 
+    unsigned int log_level() const { return m_log_level; }
+
     virtual void Accept(Visitor &visitor) const = 0;
 
    protected:
@@ -59,11 +69,12 @@ namespace hermes {
     std::string m_unit;
     std::string m_description;
     unsigned int m_precision;
+    unsigned int m_log_level;
 
   };
 
   /*
- * Implementation class for Fields. It is templated with the type of data it points to.
+   * Implementation class for Fields. It is templated with the type of data it points to.
    */
   template<class T>
   class Field : public FieldBase {
@@ -74,11 +85,21 @@ namespace hermes {
 
 
    public:
-    Field(std::string name, std::string unit, std::string description, T *data, unsigned int precision)
-        : m_getData([data]() { return *data; }), FieldBase(name, unit, description, precision) {}
+    Field(std::string name,
+          std::string unit,
+          std::string description,
+          T *data,
+          unsigned int precision,
+          unsigned int log_level)
+        : m_getData([data]() { return *data; }), FieldBase(name, unit, description, precision, log_level) {}
 
-    Field(std::string name, std::string unit, std::string description, std::function<T()> data, unsigned int precision)
-        : m_getData([data]() { return data(); }), FieldBase(name, unit, description, precision) {}
+    Field(std::string name,
+          std::string unit,
+          std::string description,
+          std::function<T()> data,
+          unsigned int precision,
+          unsigned int log_level)
+        : m_getData([data]() { return data(); }), FieldBase(name, unit, description, precision, log_level) {}
 
     void Accept(Visitor &visitor) const override;
 
@@ -120,6 +141,7 @@ namespace hermes {
    protected:
     std::string m_name;
     std::string m_description;
+    unsigned int m_log_level;
 
     typedef std::vector<std::unique_ptr<FieldBase>> VectorType;
     VectorType m_fields;
@@ -134,7 +156,10 @@ namespace hermes {
 
     Message() = default;
 
-    Message(const std::string &name, const std::string &description) : m_name(name), m_description(description) {}
+    Message(const std::string &name, const std::string &description) :
+        m_name(name),
+        m_description(description),
+        m_log_level(0) {}
 
     void SetName(std::string name) { m_name = name; }
 
@@ -149,18 +174,30 @@ namespace hermes {
       m_description = description;
     }
 
+    void SetLogLevel(unsigned int log_level) { m_log_level = log_level; }
+
+    unsigned int GetLogLevel() const { return m_log_level; }
+
     template<class T>
-    void AddField(std::string name, std::string unit, std::string description, T *val, unsigned int precision = 5) {
-      // FIXME : pourquoi on renvoit le pointeur vers le champ ?
-      m_fields.emplace_back(std::make_unique<Field<T>>(name, unit, description, val, precision));
+    void AddField(std::string name,
+                  std::string unit,
+                  std::string description,
+                  T *val,
+                  unsigned int precision = 5,
+                  bool log_level = HERMES_MAX_LOG_LEVEL) {
+      m_fields.emplace_back(std::make_unique<Field<T>>(name, unit, description, val, precision, log_level));
       m_mapper[name] = c_nbFields;
       c_nbFields++;
     }
 
     template<typename T>
-    void
-    AddField(std::string name, std::string unit, std::string description, std::function<T()> func, unsigned int precision = 5) {
-      m_fields.emplace_back(std::make_unique<Field<T>>(name, unit, description, func, precision));
+    void AddField(std::string name,
+                  std::string unit,
+                  std::string description,
+                  std::function<T()> func,
+                  unsigned int precision = 5,
+                  bool log_level = HERMES_MAX_LOG_LEVEL) {
+      m_fields.emplace_back(std::make_unique<Field<T>>(name, unit, description, func, precision, log_level));
       m_mapper[name] = c_nbFields;
       c_nbFields++;
     }
@@ -182,31 +219,31 @@ namespace hermes {
 
 
     void ApplyVisitor(Visitor &visitor) const {
-      for (const auto &fieldUPtr : m_fields) {
-        fieldUPtr->Accept(visitor);
+      for (const auto &fieldUPtr: m_fields) {
+        if (fieldUPtr->log_level() <= m_log_level) fieldUPtr->Accept(visitor);
       }
     }
 
     void Initialize() const {
-      for (const auto &serializer : m_serializers) {
+      for (const auto &serializer: m_serializers) {
         serializer->Initialize(this);
       }
     }
 
     virtual void Serialize() const {
-      for (const auto &serializer : m_serializers) {
+      for (const auto &serializer: m_serializers) {
         serializer->Serialize(this);
       }
     }
 
     virtual void Finalize() const {
-      for (const auto &serializer : m_serializers) {
+      for (const auto &serializer: m_serializers) {
         serializer->Finalize(this);
       }
     }
 
     virtual void Send() const {
-      for (const auto &serializer : m_serializers) {
+      for (const auto &serializer: m_serializers) {
         serializer->Send(this);
       }
     }
@@ -334,7 +371,7 @@ namespace hermes {
         auto vector = field->GetData();
         fmt::format_to(m_serializer->m_buffer, "  * {:>10s} ({:^5s}) : ",
                        field->GetName(), field->GetUnit());
-        for (const auto &element : vector) {
+        for (const auto &element: vector) {
           fmt::format_to(m_serializer->m_buffer, "{}{:.12g}\t", m_serializer->m_buffer.data(), element);
         }
         fmt::format_to(m_serializer->m_buffer, "{}\n", m_serializer->m_buffer.data());
@@ -480,11 +517,13 @@ namespace hermes {
       }
 
       void visit(const Field<float> *field) override {
-        fmt::format_to(m_serializer->m_buffer, "{:.{}f}{:s}", field->GetData(), field->precision(), m_serializer->m_delimiter);
+        fmt::format_to(m_serializer->m_buffer, "{:.{}f}{:s}", field->GetData(), field->precision(),
+                       m_serializer->m_delimiter);
       }
 
       void visit(const Field<double> *field) override {
-        fmt::format_to(m_serializer->m_buffer, "{:.{}f}{:s}", field->GetData(), field->precision(), m_serializer->m_delimiter);
+        fmt::format_to(m_serializer->m_buffer, "{:.{}f}{:s}", field->GetData(), field->precision(),
+                       m_serializer->m_delimiter);
       }
 
       void visit(const Field<bool> *field) override {
