@@ -1,6 +1,7 @@
 #ifndef HERMES_VISITOR_H_
 #define HERMES_VISITOR_H_
 
+#include <vector>
 #include <Eigen/Core>
 
 namespace hermes {
