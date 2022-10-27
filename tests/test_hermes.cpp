@@ -1,6 +1,8 @@
 #include <gtest/gtest.h>
 #include <iostream>
 
+#include <fmt/format.h>
+
 #include "hermes/hermes.h"
 #include "hermes/version.h"
 

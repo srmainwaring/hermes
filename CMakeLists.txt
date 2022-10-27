@@ -6,9 +6,7 @@
 
 
 cmake_minimum_required(VERSION 3.11 FATAL_ERROR)
-
 project(hermes LANGUAGES CXX)
-
 
 # Prevent in-source build
 if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_BINARY_DIR})
@@ -19,7 +17,6 @@ endif(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_BINARY_DIR})
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_CXX_EXTENSIONS False)
-
 
 # Version informations
 set(hermes_VERSION_MAJOR   "0")
@@ -56,13 +53,8 @@ include(Add_Eigen3)
 # For Windows (exposing public API)
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 
-# Creating the library
-add_library(hermes INTERFACE)
-add_dependencies(hermes check_git_hermes) # For git_watcher to fetch git informations before effective build
-
 add_subdirectory(src)
-
-target_link_libraries(hermes INTERFACE fmt Eigen3::Eigen)
+add_dependencies(hermes check_git_hermes) # For git_watcher to fetch git informations before effective build
 
 # Adding tests
 if (HERMES_BUILD_TESTS)
