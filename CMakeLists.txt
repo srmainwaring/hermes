@@ -4,7 +4,6 @@
 #
 #=============================================================================
 
-
 cmake_minimum_required(VERSION 3.11 FATAL_ERROR)
 project(hermes LANGUAGES CXX)
 
@@ -12,6 +11,11 @@ project(hermes LANGUAGES CXX)
 if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_BINARY_DIR})
     message( FATAL_ERROR  "In-source build is not possible and not recommended. Choose an empty directory for build output.")
 endif(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_BINARY_DIR})
+
+set(hermes_is_toplevel_project FALSE)
+if (CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
+    set(hermes_is_toplevel_project TRUE)
+endif()
 
 # Languages requirements
 set(CMAKE_CXX_STANDARD 14)
@@ -42,8 +46,7 @@ if (NOT EXISTS ${POST_CONFIGURE_FILE})
 endif()
 
 # Hermes options
-option(HERMES_BUILD_TESTS "Tests building." ON)
-option(BUILD_SHARED_LIBS "" ON)
+option(HERMES_BUILD_TESTS "Tests building." ${hermes_is_toplevel_project})
 
 # hermes depends on fmt library
 include(cmake/URL.conf.cmake)
