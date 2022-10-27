@@ -44,18 +44,14 @@ if (NOT EXISTS ${POST_CONFIGURE_FILE})
     configure_file(${PRE_CONFIGURE_FILE} ${POST_CONFIGURE_FILE})
 endif()
 
-
-
 # Hermes options
 option(HERMES_BUILD_TESTS "Tests building." ON)
 option(BUILD_SHARED_LIBS "" ON)
-
 
 # hermes depends on fmt library
 include(cmake/URL.conf.cmake)
 include(Add_fmt)
 include(Add_Eigen3)
-
 
 # For Windows (exposing public API)
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
@@ -68,8 +64,9 @@ add_subdirectory(src)
 
 target_link_libraries(hermes INTERFACE fmt Eigen3::Eigen)
 
-
 # Adding tests
 if (HERMES_BUILD_TESTS)
+    include(Add_googletest)
+    enable_testing()
     add_subdirectory(tests)
 endif()
