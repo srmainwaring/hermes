@@ -2,6 +2,8 @@
 #define HERMES_VISITOR_H_
 
 #include <vector>
+#include <functional>
+#include <chrono>
 #include <Eigen/Core>
 
 namespace hermes {
@@ -25,6 +27,8 @@ namespace hermes {
     virtual void visit(const Field<std::vector<double>> *field) = 0;
 
     virtual void visit(const Field<std::function<double()>> *field) = 0;
+
+    virtual void visit(const Field<std::chrono::time_point<std::chrono::system_clock>>* field) = 0;
 
   };
 }  // namespace hermes

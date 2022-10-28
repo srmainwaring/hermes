@@ -26,6 +26,9 @@ namespace hermes {
       throw std::runtime_error{"Can't serialize std::vector in a psql database"};
     }
     void visit(const Field<std::function<double()>> *field) override { CreateColumn(*field, "DOUBLE PRECISION NULL"); }
+    void visit(const Field<std::chrono::time_point<std::chrono::system_clock>> *field) override {
+      CreateColumn(*field, "TIMESTAMPTZ NULL");
+    }
 
    private:
     static std::string ColumnName(const FieldBase& field) {
@@ -80,6 +83,9 @@ namespace hermes {
     void visit(const Field<std::function<double()>> *field) override {
       AddColumn(*field, std::to_string(field->GetData()()));
     }
+    void visit(const Field<std::chrono::time_point<std::chrono::system_clock>> *field) override {
+      AddColumn(*field, fmt::format("'{}'", ISO8601(field->GetData())));
+    }
 
    private:
     void AddColumn(const FieldBase& field, std::string value) {
@@ -94,7 +100,7 @@ namespace hermes {
 
   class PSQLSerializer::Transaction {
    public:
-    Transaction(pqxx::connection& connection) : tx(connection) {}
+    explicit Transaction(pqxx::connection& connection) : tx(connection) {}
     pqxx::work tx;
   };
 

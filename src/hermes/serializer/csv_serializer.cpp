@@ -6,6 +6,7 @@
 
 #include "hermes/serialization_visitor.h"
 #include "hermes/message.h"
+#include "hermes/chrono.h"
 
 namespace hermes {
   class CSVSerializer::Impl {
@@ -59,8 +60,9 @@ namespace hermes {
       }
     }
 
-    void visit(const Field<std::function<double()>> *field) { visit((FieldBase *) field); }
+    void visit(const Field<std::function<double()>> *field) override { visit((FieldBase *) field); }
 
+    void visit(const Field<std::chrono::time_point<std::chrono::system_clock>>* field) override { visit((FieldBase *) field); }
 
   };
 
@@ -99,7 +101,11 @@ namespace hermes {
       }
     }
 
-    void visit(const Field<std::function<double()>> *field) { visit((FieldBase *) field); }
+    void visit(const Field<std::function<double()>> *field) override { visit((FieldBase *) field); }
+
+    void visit(const Field<std::chrono::time_point<std::chrono::system_clock>>* field) override {
+      visit((FieldBase *) field);
+    }
   };
 
   class CSVSerializer::SerializeVisitor : public SerializationVisitor<CSVSerializer> {
@@ -154,12 +160,16 @@ namespace hermes {
       }
     }
 
-    void visit(const Field<std::function<double()>> *field) {
+    void visit(const Field<std::function<double()>> *field) override {
       fmt::format_to(std::back_inserter(m_serializer->m_impl->m_buffer), "{:.{}f}{:s}",
                      (field->GetData())(), field->precision(),
                      m_serializer->m_impl->m_delimiter);
     }
 
+    void visit(const Field<std::chrono::time_point<std::chrono::system_clock>>* field) override {
+      fmt::format_to(std::back_inserter(m_serializer->m_impl->m_buffer), "{:s}{:s}",
+                     ISO8601(field->GetData()), m_serializer->m_impl->m_delimiter);
+    }
   };
 
   std::string CSVSerializer::GetCSVLine() {

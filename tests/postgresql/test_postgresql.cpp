@@ -15,6 +15,7 @@ TEST(Hermes, PostgreSQL) {
     double d{};
     std::string str;
     bool bo{};
+    std::chrono::time_point<std::chrono::system_clock> time;
   };
   MessageData data;
   hermes::Message m("MSG1", "Le premier message");
@@ -23,6 +24,7 @@ TEST(Hermes, PostgreSQL) {
   m.AddField("pi", "km", "Un double", &data.d);
   m.AddField("name", "--", "Une chaine", &data.str);
   m.AddField("is_something", "--", "", &data.bo);
+  m.AddField("time", "--", "Generation timestamp", &data.time);
 
 
   std::shared_ptr<pqxx::connection> connection;
@@ -43,6 +45,7 @@ TEST(Hermes, PostgreSQL) {
     data.d = static_cast<double>(data.i) / 100;
     data.str = fmt::format("Currend index is {}", idx);
     data.bo = idx < 4;
+    data.time = std::chrono::system_clock::now();
     m.Serialize();
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
   }

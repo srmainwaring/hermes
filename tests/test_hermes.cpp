@@ -10,6 +10,7 @@ struct Obj {
   int i;
   double d;
   std::string str;
+  std::chrono::time_point<std::chrono::system_clock> time;
 };
 
 TEST(Hermes, Basic) {
@@ -18,6 +19,7 @@ TEST(Hermes, Basic) {
   o.i = 2;
   o.d = 3.14989796584651681;
   o.str = "coucou";
+  o.time = std::chrono::system_clock::now();
 
   Message m("MSG1", "Le premier message");
 
@@ -25,6 +27,7 @@ TEST(Hermes, Basic) {
   m.AddField<int>("Nb", "m/s", "Un entier", &o.i);
   m.AddField<double>("pi", "km", "Un double", &o.d);
   m.AddField<std::string>("name", "--", "Une chaine", &o.str);
+  m.AddField("time", "--", "A time", &o.time);
 
   Message m2("MSG2", "Un second message");
 

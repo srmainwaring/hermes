@@ -9,6 +9,7 @@
 #include "hermes/serialization_visitor.h"
 #include "hermes/field.h"
 #include "hermes/message.h"
+#include "hermes/chrono.h"
 
 namespace hermes {
   class PrintSerializer::Impl {
@@ -42,6 +43,9 @@ namespace hermes {
 
     void visit(const Field<std::function<double()>> *field) override { visit((FieldBase *) field); }
 
+    void visit(const Field<std::chrono::time_point<std::chrono::system_clock>>* field) override {
+      visit((FieldBase *) field);
+    }
   };
 
   class PrintSerializer::SerializeVisitor : public SerializationVisitor<PrintSerializer> {
@@ -95,6 +99,11 @@ namespace hermes {
     void visit(const Field<std::function<double(void)>> *field) override {
       fmt::format_to(std::back_inserter(m_serializer->m_impl->buffer), "  * {:>10s} ({:^5s}) : {:.12g}\n",
                      field->GetName(), field->GetUnit(), (field->GetData())());
+    }
+
+    void visit(const Field<std::chrono::time_point<std::chrono::system_clock>>* field) override {
+      fmt::format_to(std::back_inserter(m_serializer->m_impl->buffer), "  * {:>10s} ({:^5s}) : {:s}\n",
+                     field->GetName(), field->GetUnit(), ISO8601(field->GetData()));
     }
   };
 
