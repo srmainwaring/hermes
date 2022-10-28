@@ -1,4 +1,4 @@
-add_library(hermes
+set(hermes_sources
   hermes.h
   field_base.h
   field_base.cpp
@@ -15,8 +15,25 @@ add_library(hermes
 
   message.h
   message.cpp
+
+  chrono.h
 )
-target_link_libraries(hermes PUBLIC fmt Eigen3::Eigen)
+set(hermes_deps
+  fmt
+  Eigen3::Eigen
+  spdlog
+)
+
+if (${HERMES_ENABLE_PSQL})
+  set(hermes_sources ${hermes_sources}
+    serializer/psql_serializer.h
+    serializer/psql_serializer.cpp
+  )
+  set(hermes_deps ${hermes_deps} pqxx)
+endif()
+
+add_library(hermes ${hermes_sources})
+target_link_libraries(hermes PUBLIC ${hermes_deps})
 
 target_include_directories(hermes PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>

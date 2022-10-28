@@ -122,7 +122,7 @@ namespace hermes {
 
   void PrintSerializer::Finalize(const Message *msg) {}
 
-  void PrintSerializer::PrintSerializer::Send(const Message *msg) {
+  void PrintSerializer::Send(const Message *msg) {
     std::cout << fmt::to_string(m_impl->buffer);
     m_impl->buffer.clear();
   }

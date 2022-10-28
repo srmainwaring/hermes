@@ -9,12 +9,17 @@
 
 #include "hermes/field.h"
 
+namespace pqxx {
+  class connection;
+}  // namespace pqxx
+
 namespace hermes {
   class FieldBase;
 
   class Serializer;
   class CSVSerializer;
   class PrintSerializer;
+  class PSQLSerializer;
 
   class Message {
    protected:
@@ -79,6 +84,7 @@ namespace hermes {
     // NOTE: Declared in serializer cpp file
     CSVSerializer *AddCSVSerializer(std::string CSVFile);
     PrintSerializer *AddPrintSerializer();
+    PSQLSerializer *AddPSQLSerializer(std::shared_ptr<pqxx::connection> conn);
 
    protected:
     std::string m_name;
