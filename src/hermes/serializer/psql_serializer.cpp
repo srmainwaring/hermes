@@ -27,7 +27,7 @@ namespace hermes {
     }
     void visit(const Field<std::function<double()>> *field) override { CreateColumn(*field, "DOUBLE PRECISION NULL"); }
     void visit(const Field<std::chrono::time_point<std::chrono::system_clock>> *field) override {
-      CreateColumn(*field, "TIMESTAMPTZ NULL");
+      CreateColumn(*field, "TIMESTAMPTZ NULL", true);
     }
 
    private:
@@ -37,9 +37,12 @@ namespace hermes {
       return retval;
     }
 
-    void CreateColumn(const FieldBase& field, const std::string& column_type) {
+    void CreateColumn(const FieldBase& field, const std::string& column_type, bool is_time_point_type = false) {
       pqxx::work tx(m_connection);
       auto column_name = ColumnName(field);
+      if (column_name == "time" && !is_time_point_type) {
+        throw std::runtime_error{"Hermes PSQL integration only support std::chrono::time_point<std::chrono::system_clock> as base time for column 'time'"};
+      }
 
       auto query = fmt::format("ALTER TABLE {} ADD {} {}", m_table_name, column_name, column_type);
       spdlog::trace("[hermes][PSQLSerializer][InitVisitor] {}", query);

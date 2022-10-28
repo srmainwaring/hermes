@@ -32,6 +32,7 @@ TEST(Hermes, PostgreSQL) {
     connection = std::make_shared<pqxx::connection>("user=postgres password=password host=localhost dbname=database");
   } catch (const pqxx::failure& err) {
     spdlog::info("Connection failed ! {}", err.what());
+    ASSERT_FALSE(true);
   }
   m.AddPSQLSerializer(connection);
 
@@ -50,4 +51,30 @@ TEST(Hermes, PostgreSQL) {
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
   }
   m.Send();
+}
+
+TEST(Hermes, TimeTypeError) {
+  struct MessageData {
+    int i{};
+    double time{};
+  };
+  MessageData data;
+  hermes::Message m("MSG2", "Le Second message");
+  m.AddField("Nb", "m/s", "Un entier", &data.i);
+  m.AddField("time", "s since epoch", "Generation timestamp", &data.time);
+
+  std::shared_ptr<pqxx::connection> connection;
+  try {
+    connection = std::make_shared<pqxx::connection>("user=postgres password=password host=localhost dbname=database");
+  } catch (const pqxx::failure& err) {
+    spdlog::info("Connection failed ! {}", err.what());
+    ASSERT_FALSE(true);
+  }
+  m.AddPSQLSerializer(connection);
+  try {
+    m.Initialize();
+    ASSERT_FALSE(true);
+  } catch (const std::runtime_error& err) {
+    spdlog::info("{}", err.what());
+  }
 }
