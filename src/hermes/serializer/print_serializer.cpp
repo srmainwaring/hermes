@@ -25,6 +25,7 @@ namespace hermes {
     }
 
    public:
+    virtual ~InitVisitor() {}
     explicit InitVisitor(PrintSerializer *serializer) : SerializationVisitor<PrintSerializer>(serializer) {}
 
     void visit(const Field<int> *field) override { visit((FieldBase *) field); }
@@ -50,6 +51,7 @@ namespace hermes {
 
   class PrintSerializer::SerializeVisitor : public SerializationVisitor<PrintSerializer> {
    public:
+    virtual ~SerializeVisitor() {}
     explicit SerializeVisitor(PrintSerializer *serializer) :
         SerializationVisitor<PrintSerializer>(serializer) {}
 
@@ -111,6 +113,8 @@ namespace hermes {
     fmt::format_to(std::back_inserter(m_impl->buffer), "\n[{}] : {}\n", msg->GetName(), msg->GetDescription());
   }
 
+  PrintSerializer::~PrintSerializer() {
+  }
 
   PrintSerializer::PrintSerializer() :
     m_impl(std::make_unique<Impl>()),

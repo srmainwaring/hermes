@@ -17,7 +17,7 @@ namespace hermes {
       std::string GetCSVLine();
 
      public:
-
+      virtual ~CSVSerializer();
       explicit CSVSerializer(std::string CSVFile);
       void SetDelimiter(const std::string &delimiter);
       void Initialize(const Message *msg) override;

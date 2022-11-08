@@ -30,6 +30,7 @@ namespace hermes {
     }
 
    public:
+    virtual ~InitVisitor() {}
     explicit InitVisitor(CSVSerializer *serializer) :
         SerializationVisitor<CSVSerializer>(serializer) {}
 
@@ -74,6 +75,7 @@ namespace hermes {
     }
 
    public:
+    virtual ~UnitLineVisitor() {}
     explicit UnitLineVisitor(CSVSerializer *serializer) :
         SerializationVisitor<CSVSerializer>(serializer) {}
 
@@ -111,6 +113,7 @@ namespace hermes {
   class CSVSerializer::SerializeVisitor : public SerializationVisitor<CSVSerializer> {
 
    public:
+    virtual ~SerializeVisitor() {}
     explicit SerializeVisitor(CSVSerializer *serializer) :
         SerializationVisitor<CSVSerializer>(serializer) {}
 
@@ -178,7 +181,8 @@ namespace hermes {
     return fmt::to_string(m_impl->m_buffer);
   }
 
-
+  CSVSerializer::~CSVSerializer() {
+  }
 
   CSVSerializer::CSVSerializer(std::string CSVFile) :
     m_serializeVisitor(std::make_unique<SerializeVisitor>(this)),

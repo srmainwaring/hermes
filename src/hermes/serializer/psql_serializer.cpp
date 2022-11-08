@@ -10,6 +10,7 @@
 namespace hermes {
   class InitVisitor : public Visitor {
    public:
+    virtual ~InitVisitor() {}
     explicit InitVisitor(std::string table_name, pqxx::connection& connection) :
         m_table_name(std::move(table_name)),
         m_connection(connection) {}
@@ -65,6 +66,7 @@ namespace hermes {
 
   class SerializeVisitor : public Visitor {
    public:
+    virtual ~SerializeVisitor() {}
     explicit SerializeVisitor(std::map<std::string, std::string>& columns) : m_columns(columns) {}
     void visit(const Field<int> *field) override {
       AddColumn(*field, std::to_string(field->GetData()));
@@ -106,6 +108,9 @@ namespace hermes {
     explicit Transaction(pqxx::connection& connection) : tx(connection) {}
     pqxx::work tx;
   };
+
+  PSQLSerializer::~PSQLSerializer() {
+  }
 
   PSQLSerializer::PSQLSerializer(std::shared_ptr<pqxx::connection> connection) :
     m_connection(std::move(connection)),

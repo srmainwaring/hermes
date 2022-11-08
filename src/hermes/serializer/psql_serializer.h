@@ -20,6 +20,7 @@ namespace hermes {
    */
   class PSQLSerializer : public Serializer {
    public:
+    virtual ~PSQLSerializer();
     explicit PSQLSerializer(std::shared_ptr<pqxx::connection> connection);
 
     void Initialize(const Message *msg) override;

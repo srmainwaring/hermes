@@ -6,6 +6,8 @@
 namespace hermes {
   template<class C>
   class SerializationVisitor : public Visitor {
+   public:
+    virtual ~SerializationVisitor() {}
    protected:
     C *m_serializer;
 

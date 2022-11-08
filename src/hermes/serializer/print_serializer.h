@@ -10,6 +10,7 @@ namespace hermes {
   class PrintSerializer : public Serializer {
 
    public:
+    virtual ~PrintSerializer();
     PrintSerializer();
 
     void Initialize(const Message *msg) override;

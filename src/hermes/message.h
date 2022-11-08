@@ -26,6 +26,7 @@ namespace hermes {
     using VectorType = std::vector<std::unique_ptr<FieldBase>>;
 
    public:
+    virtual ~Message();
     Message() = default;
     Message(const std::string &name, const std::string &description);
     void SetName(std::string name);

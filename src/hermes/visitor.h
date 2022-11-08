@@ -11,6 +11,7 @@ namespace hermes {
   class Field;
   
   struct Visitor {
+    virtual ~Visitor() {}
 
     virtual void visit(const Field<int> *field) = 0;
 
