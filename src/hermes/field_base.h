@@ -12,6 +12,8 @@ namespace hermes {
    */
   class FieldBase {
    public:
+    virtual ~FieldBase();
+
     FieldBase(std::string name,
               std::string unit,
               std::string description,

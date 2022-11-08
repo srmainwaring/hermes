@@ -18,6 +18,8 @@ namespace hermes {
     std::function<T()> m_getData;
 
    public:
+    virtual ~Field() {}
+
     Field(std::string name,
           std::string unit,
           std::string description,

@@ -1,6 +1,9 @@
 #include "hermes/field_base.h"
 
 namespace hermes {
+  FieldBase::~FieldBase()
+  {
+  }
 
   FieldBase::FieldBase(std::string name,
                        std::string unit,
