@@ -42,6 +42,8 @@ namespace hermes {
         std::string m_description = "";
 
     public:
+        virtual ~FieldBase() {}
+
         FieldBase(std::string name, std::string unit, std::string description) :
                 m_name(std::move(name)), m_unit(std::move(unit)), m_description(std::move(description)) {}
 
@@ -70,6 +72,8 @@ namespace hermes {
 
 
     public:
+        virtual ~Field() {}
+
         Field(std::string name, std::string unit, std::string description, T *data)
                 : m_getData([data]() { return *data;}), FieldBase(name, unit, description) {}
 
@@ -127,6 +131,7 @@ namespace hermes {
 
 
     public:
+        virtual ~Message() {}
 
         Message() = default;
 
@@ -223,6 +228,7 @@ namespace hermes {
     };
 
     struct Visitor {
+        virtual ~Visitor() {}
 
         virtual void visit(const Field<int> *field) = 0;
 
@@ -250,6 +256,9 @@ namespace hermes {
 
     template<class C>
     class SerializationVisitor : public Visitor {
+    public:
+        virtual ~SerializationVisitor() {}
+
     protected:
         C *m_serializer;
 
@@ -267,6 +276,8 @@ namespace hermes {
             }
 
         public:
+            virtual ~InitVisitor() {}
+
             explicit InitVisitor(PrintSerializer *serializer) :
                     SerializationVisitor<PrintSerializer>(serializer) {}
 
@@ -291,6 +302,8 @@ namespace hermes {
         class SerializeVisitor : public SerializationVisitor<PrintSerializer> {
 
         public:
+            virtual ~SerializeVisitor() {}
+
             explicit SerializeVisitor(PrintSerializer *serializer) :
                     SerializationVisitor<PrintSerializer>(serializer) {}
 
@@ -353,6 +366,8 @@ namespace hermes {
 
     public:
 
+        virtual ~PrintSerializer() {}
+
         PrintSerializer() : m_serializeVisitor(this) {}
 
         void Initialize(const Message *msg) override {
@@ -395,6 +410,8 @@ namespace hermes {
             }
 
         public:
+            virtual ~InitVisitor() {}
+
             explicit InitVisitor(CSVSerializer *serializer) :
                     SerializationVisitor<CSVSerializer>(serializer) {}
 
@@ -437,6 +454,8 @@ namespace hermes {
             }
 
         public:
+            virtual ~UnitLineVisitor() {}
+
             explicit UnitLineVisitor(CSVSerializer *serializer) :
                     SerializationVisitor<CSVSerializer>(serializer) {}
 
@@ -469,6 +488,8 @@ namespace hermes {
         class SerializeVisitor : public SerializationVisitor<CSVSerializer> {
 
         public:
+            virtual ~SerializeVisitor() {}
+
             explicit SerializeVisitor(CSVSerializer *serializer) :
                     SerializationVisitor<CSVSerializer>(serializer) {}
 
@@ -524,9 +545,11 @@ namespace hermes {
 
     public:
 
-    explicit CSVSerializer(std::string CSVFile) : m_serializeVisitor(this), m_CSVFile(CSVFile) {}
+        virtual ~CSVSerializer() {}
 
-    void SetDelimiter(const std::string &delimiter) { m_delimiter = delimiter; }
+        explicit CSVSerializer(std::string CSVFile) : m_serializeVisitor(this), m_CSVFile(CSVFile) {}
+
+        void SetDelimiter(const std::string &delimiter) { m_delimiter = delimiter; }
 
         void Initialize(const Message *msg) override {
             // Building the file name based on rule on message
